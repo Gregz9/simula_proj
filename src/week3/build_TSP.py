@@ -132,13 +132,11 @@ from qiskit.utils import QuantumInstance
 
 algorithm_globals.random_seed = 73
 seed = 10598
-sim = Aer.get_backend("qasm_simulator")
-quantum_instance = QuantumInstance(
-    backend=sim, seed_simulator=seed, seed_transpiler=seed
-)
+sim = Aer.get_backend("aer_simulator")
+quantum_instance = QuantumInstance(backend=sim)
 
 optimizer = COBYLA(maxiter=200)
-ry = TwoLocal(qubitOp.num_qubits, "ry", "cz", reps=4, entanglement="linear")
+ry = TwoLocal(qubitOp.num_qubits, "ry", "cz", reps=2, entanglement="linear")
 vqe = VQE(ansatz=ry, optimizer=optimizer, quantum_instance=quantum_instance)
 result = vqe.compute_minimum_eigenvalue(qubitOp)
 

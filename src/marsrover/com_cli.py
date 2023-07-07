@@ -8,25 +8,28 @@ s.connect(("192.168.50.185", port))
 print("Connected to server")
 
 speed = 60
-while True:
-    command = s.recv(1024).decode("utf-8")
+try:
+    while True:
+        command = s.recv(1024).decode("utf-8")
 
-    if command == "W":
-        rover.forward(speed)
+        if command == "W":
+            rover.forward(speed)
 
-    elif commad == "":
-        rover.stop()
+        elif commad == "":
+            rover.stop()
 
-    if not command:
-        print("Connection closed by server.")
-        break
+        if not command:
+            print("Connection closed by server.")
+            break
 
-    if command.lower() == "terminate":
-        break
+        if command.lower() == "terminate":
+            break
 
-    output = command
+        output = command
 
-    s.send(output.encode("utf-8"))
-    print(output)
+        s.send(output.encode("utf-8"))
+        print(output)
 
-s.close()
+    s.close()
+except socket.error:
+    print("Something's wrong")

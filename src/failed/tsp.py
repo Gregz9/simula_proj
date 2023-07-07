@@ -2,16 +2,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import networkx as nx
-import time
 
-from qiskit import Aer, QuantumCircuit
 from qiskit_aer import Aer
 from qiskit.tools.visualization import plot_histogram
+from qiskit.algorithms.minimum_eigensolvers import QAOA
 from qiskit.circuit.library import TwoLocal
-from qiskit.primitives import BaseEstimator
 from qiskit_optimization.applications import Maxcut, Tsp
-from qiskit.algorithms.minimum_eigensolvers import NumPyMinimumEigensolver, QAOA
-from qiskit.algorithms import VQE
+from qiskit.algorithms.minimum_eigensolvers import SamplingVQE, NumPyMinimumEigensolver
 from qiskit.algorithms.optimizers import SPSA
 from qiskit.utils import algorithm_globals
 from qiskit.primitives import Sampler
@@ -27,21 +24,19 @@ def draw_graph(G, colors, pos):
     nx.draw_networkx_edge_labels(G, pos=pos, edge_labels=edge_labels)
 
 
-from itertools import permutations
-
-
-n = 4
-num_qubits = (n - 1) ** 2
-tsp = Tsp.create_random_instance(n, seed=98374)
+# Generating a graph of 3 nodes
+n = 3
+num_qubits = n**2
+tsp = Tsp.create_random_instance(n, seed=123)
 adj_matrix = nx.to_numpy_array(tsp.graph)
-
-print(adj_matrix)
+print("distance\n", adj_matrix)
 
 colors = ["r" for node in tsp.graph.nodes]
 pos = [tsp.graph.nodes[node]["pos"] for node in tsp.graph.nodes]
-print(pos)
 draw_graph(tsp.graph, colors, pos)
+
 plt.show()
+from itertools import permutations
 
 
 def brute_force_tsp(w, N):
@@ -62,7 +57,6 @@ def brute_force_tsp(w, N):
     return last_best_distance, best_order
 
 
-start_time = time.time()
 best_distance, best_order = brute_force_tsp(adj_matrix, n)
 print(
     "Best order from brute force = "
@@ -70,7 +64,6 @@ print(
     + " with total distance = "
     + str(best_distance)
 )
-print(f"Time taken for brute force solution: {time.time() - start_time}")
 
 
 def draw_tsp_solution(G, order, colors, pos):
@@ -94,21 +87,30 @@ def draw_tsp_solution(G, order, colors, pos):
     nx.draw_networkx_edge_labels(G2, pos, font_color="b", edge_labels=edge_labels)
 
 
+draw_tsp_solution(tsp.graph, best_order, colors, pos)
+
+plt.show()
+
 qp = tsp.to_quadratic_program()
+print(qp.prettyprint())
 
 from qiskit_optimization.converters import QuadraticProgramToQubo
+
 
 qp2qubo = QuadraticProgramToQubo()
 qubo = qp2qubo.convert(qp)
 qubitOp, offset = qubo.to_ising()
+print("Offset:", offset)
+print("Ising Hamiltonian:")
+print(str(qubitOp))
 
 exact = MinimumEigenOptimizer(NumPyMinimumEigensolver())
-result = exact.solve(qubo)
+result = exact.solve(qp)
+print(result)
 
-start_time = time.time()
+# Making the Hamiltonian in its full form and getting the lowest eigenvalue and eigenvector
 ee = NumPyMinimumEigensolver()
 result = ee.compute_minimum_eigenvalue(qubitOp)
-print(f"Time taken for exact solution: {time.time() - start_time}")
 
 print("energy:", result.eigenvalue.real)
 print("tsp objective:", result.eigenvalue.real + offset)
@@ -119,31 +121,14 @@ print("solution:", z)
 print("solution objective:", tsp.tsp_value(z, adj_matrix))
 draw_tsp_solution(tsp.graph, z, colors, pos)
 
-import sys
-
-sys.exit()
-
-
-from qiskit.algorithms.optimizers import (
-    ADAM,
-    COBYLA,
-    NELDER_MEAD,
-    L_BFGS_B,
-    POWELL,
-    NFT,
-    TNC,
-)
-from qiskit.utils import QuantumInstance
-
-algorithm_globals.random_seed = 73
+algorithm_globals.random_seed = 123
 seed = 10598
-sim = Aer.get_backend("aer_simulator")
-quantum_instance = QuantumInstance(backend=sim)
 
-optimizer = COBYLA(maxiter=200)
-ry = TwoLocal(qubitOp.num_qubits, "ry", "cz", reps=2, entanglement="linear")
-vqe = VQE(ansatz=ry, optimizer=optimizer, quantum_instance=quantum_instance)
-result = vqe.compute_minimum_eigenvalue(qubitOp)
+optimizer = SPSA(maxiter=300)
+ry = TwoLocal(qubitOp.num_qubits, "ry", "cz", reps=5, entanglement="linear")
+qaoa = QAOA(sampler=Sampler(), initial_state=ry, optimizer=optimizer)
+
+result = qaoa.compute_minimum_eigenvalue(qubitOp)
 
 print("energy:", result.eigenvalue.real)
 print("time:", result.optimizer_time)
@@ -152,3 +137,4 @@ print("feasible:", qubo.is_feasible(x))
 z = tsp.interpret(x)
 print("solution:", z)
 print("solution objective:", tsp.tsp_value(z, adj_matrix))
+draw_tsp_solution(tsp.graph, z, colors, pos)

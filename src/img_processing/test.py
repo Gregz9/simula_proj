@@ -7,7 +7,7 @@ import os
 
 # Test paths:
 
-path = "test_images/01.jpg"
+path = "/home/gregz/Files/simula_proj/test_images/05.jpg"
 # path = "test_images/02.jpg"
 # path = "test_images/03.jpg"
 # path = "test_images/04.jpg"
@@ -16,3 +16,4 @@ path = "test_images/01.jpg"
 #get the graph
 G = img_to_graph(path, print_image=True)
 draw_graph(G)
+

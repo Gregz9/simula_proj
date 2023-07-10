@@ -220,7 +220,7 @@ def create_graph(centres, img):
 
     return G
 
-def draw_graph(G, flipped=True):
+def draw_graph(G, flipped=True, solution=False, colors = ["skyblue"]):
     """Draws a graph using matplotlib.
 
     Args:
@@ -233,7 +233,8 @@ def draw_graph(G, flipped=True):
     if flipped:
         pos = {node: (x,-y) for (node, (x,y)) in pos.items()}
     
-    nx.draw(G, pos, with_labels=True, node_color='skyblue', node_size=1500, font_size=20)
+    node_color = "skyblue" if not solution else colors
+    nx.draw(G, pos, with_labels=True, node_color=node_color, node_size=1500, font_size=20)
     edge_labels_pos = {}
     
     for edge in G.edges:

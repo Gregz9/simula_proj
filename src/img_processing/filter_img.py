@@ -140,4 +140,6 @@ for i, c in enumerate(contours):
 
 cv.imshow('Output image', filter_img)
 cv.waitKey(0)
-cv.destroyAllWindows()
+cv.destroyAllWindows() 
+
+cv.imwrite("output_img.jpg", filter_img)

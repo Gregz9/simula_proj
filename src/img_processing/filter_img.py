@@ -55,18 +55,17 @@ def getOrientation(pts, img):
   cv.circle(img, cntr, 3, (255, 0, 255), 2)
   p1 = (cntr[0] + 0.02 * eigenvectors[0,0] * eigenvalues[0,0], cntr[1] + 0.02 * eigenvectors[0,1] * eigenvalues[0,0])
   p2 = (cntr[0] - 0.02 * eigenvectors[1,0] * eigenvalues[1,0], cntr[1] - 0.02 * eigenvectors[1,1] * eigenvalues[1,0])
-  drawAxis(img, cntr, p1, (255, 255, 0), 1)
-  drawAxis(img, cntr, p2, (0, 0, 255), 5)
- 
+  drawAxis(img, cntr, p1, (0, 255, 0), 1)
+  drawAxis(img, cntr, p2, (255, 255, 0), 5)
+
   angle = atan2(eigenvectors[0,1], eigenvectors[0,0]) # orientation in radians
   ## [visualization]
- 
   # Label with the rotation angle
-  label = "  Rotation Angle: " + str(-int(np.rad2deg(angle)) - 90) + " degrees"
-  textbox = cv.rectangle(img, (cntr[0], cntr[1]-25), (cntr[0] + 250, cntr[1] + 10), (255,255,255), -1)
-  cv.putText(img, label, (cntr[0], cntr[1]), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1, cv.LINE_AA)
+  # label = "  Rotation Angle: " + str(-int(np.rad2deg(angle)) + 90) + " degrees"
+  # textbox = cv.rectangle(img, (cntr[0], cntr[1]-25), (cntr[0] + 250, cntr[1] + 10), (255,255,255), -1)
+  # cv.putText(img, label, (cntr[0], cntr[1]), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1, cv.LINE_AA)
  
-  return angle
+  return angle, cntr, p2
 
 
 # image = cv.imread(args["image"])
@@ -109,12 +108,15 @@ height = int(img.shape[1] * resize_factor)
 resized = cv.resize(img, (height, width), interpolation=cv.INTER_AREA)
 cv.imwrite("compressed_image.jpg", resized, [cv.IMWRITE_JPEG_QUALITY, compression_level])
 
-comp_img = cv.imread("compressed_image.jpg")
-filter_img = cv.GaussianBlur(comp_img, (kernel_size, kernel_size),cv.BORDER_DEFAULT)
+if args["kernelsize"]: 
+    comp_img = cv.imread("compressed_image.jpg")
+    filter_img = cv.GaussianBlur(comp_img, (kernel_size, kernel_size),cv.BORDER_DEFAULT)
+else: 
+    filter_img = cv.imread("compressed_image.jpg")
+
 
 cv.imwrite("processed_image.jpg", filter_img)
 
-# hsv = cv.cvtColor(filter_img, cv.COLOR_BGR2HSV)
 if args["sobelfilter"]: 
     sobelx = cv.Sobel(filter_img, cv.CV_64F,1,0,ksize=5)
     sobely = cv.Sobel(filter_img, cv.CV_64F,0,1,ksize=5)
@@ -124,9 +126,18 @@ else:
     plt.imshow(filter_img)
     plt.show()
 
+# hsv = cv.cvtColor(filter_img, cv.COLOR_BGR2HSV)
 gray_filter_img = cv.cvtColor(filter_img, cv.COLOR_BGR2GRAY)
 _, bw = cv.threshold(gray_filter_img, 50, 255, cv.THRESH_BINARY | cv.THRESH_OTSU)
 contours, _ = cv.findContours(bw, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)
+
+
+# Drawing the global axes in the image with labels
+cv.line(filter_img, (0, filter_img.shape[0] // 2), (filter_img.shape[1], filter_img.shape[0] // 2), (0, 255, 0), 2)
+cv.putText(filter_img, 'X (Global)', (filter_img.shape[1] - 60, filter_img.shape[0] // 2 - 10), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+cv.line(filter_img, (filter_img.shape[1] // 2, 0), (filter_img.shape[1] // 2, filter_img.shape[0]), (0, 0, 255), 2)
+cv.putText(filter_img, 'Y (Global)', (filter_img.shape[1] // 2 + 10, 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
 
 for i, c in enumerate(contours): 
     area = cv.contourArea(c)
@@ -136,10 +147,18 @@ for i, c in enumerate(contours):
 
     cv.drawContours(filter_img, contours, i, (0,0,255), 2)
 
-    getOrientation(c, filter_img)
+    angle, cntr_local_axes, p2 = getOrientation(c, filter_img)
 
 cv.imshow('Output image', filter_img)
 cv.waitKey(0)
 cv.destroyAllWindows() 
 
-cv.imwrite("output_img.jpg", filter_img)
+cv.imwrite("output_img.jpg", filter_img) 
+
+
+
+
+
+
+
+

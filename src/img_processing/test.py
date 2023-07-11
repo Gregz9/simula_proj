@@ -14,6 +14,6 @@ path = "/home/gregz/Files/simula_proj/test_images/05.jpg"
 # path = "test_images/05.jpg"
 
 #get the graph
-G = img_to_graph(path, print_image=True)
+G, _ = img_to_graph(path, print_image=True)
 draw_graph(G)
 

@@ -17,29 +17,33 @@ from img_to_graph import img_to_graph
 
 path = "/home/gregz/Files/simula_proj/test_images/05.jpg"
 
-G = img_to_graph(path, print_image=True)
+G, coords = img_to_graph(path, print_image=True)
 draw_graph(G)
 
-w = np.zeros([4,4]) 
-for i in range(4): 
-    for j in range(4): 
+N = len(coords)
+
+w = np.zeros([N,N]) 
+for i in range(N): 
+    for j in range(N): 
         temp = G.get_edge_data(i, j, default=0)
         if temp != 0: 
             w[i, j] = temp["weight"]
 
+
 best_cost_brute = 0
-for b in range(2**4): 
-    x = [int(t) for t in reversed(list(bin(b)[2:].zfill(4)))]
+for b in range(2**N): 
+    x = [int(t) for t in reversed(list(bin(b)[2:].zfill(N)))]
     cost = 0
-    for i in range(4): 
-        for j in range(4): 
+    for i in range(N): 
+        for j in range(N): 
             cost = cost + w[i,j] * x[i] * (1 - x[j])
     if best_cost_brute < cost: 
         best_cost_brute = cost
         xbest_brute = x
     print("case = " + str(x) + " cost = " + str(cost))
 
-colors = ["r" if xbest_brute[i] == 0 else "c" for i in range(4)]
+
+colors = ["r" if xbest_brute[i] == 0 else "c" for i in range(N)]
 draw_graph(G, flipped=True, solution=True, colors=colors)
 print("\nBest solution = " + str(xbest_brute) + "cost = " + str(best_cost_brute))
 
@@ -65,7 +69,7 @@ print("max-cut objective:", abs(result.eigenvalue.real + offset))
 print("solution:", x)
 print("solution objective:", qp.objective.evaluate(x))
 
-colors = ["r" if xbest_brute[i] == 0 else "c" for i in range(4)]
+colors = ["r" if xbest_brute[i] == 0 else "c" for i in range(N)]
 draw_graph(G, solution=True, colors=colors)
 plt.show()
 
@@ -84,6 +88,6 @@ print("solution:", x)
 print("solution objective:", qp.objective.evaluate(x))
 
 # plot results
-colors = ["r" if x[i] == 0 else "c" for i in range(4)]
+colors = ["r" if x[i] == 0 else "c" for i in range(N)]
 draw_graph(G, solution=True, colors=colors)
 plt.show()

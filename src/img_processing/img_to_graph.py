@@ -43,4 +43,4 @@ def img_to_graph(path: str, print_image: bool=False) -> nx.Graph:
     # draw the graph
     G = create_graph(centres, img)
     #draw_graph(G)
-    return G
+    return G, centres

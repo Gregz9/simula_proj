@@ -13,7 +13,7 @@ except socket.error:
 s.listen(1)
 print("Socket awaiting message")
 (conn, addr) = s.accept()
-print(Connected)
+print('Connected')
 
 while True:
     data = conn.recv(1024)

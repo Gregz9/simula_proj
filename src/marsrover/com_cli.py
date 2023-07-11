@@ -15,7 +15,7 @@ try:
         if command == "W":
             rover.forward(speed)
 
-        elif commad == "":
+        elif command == "":
             rover.stop()
 
         if not command:

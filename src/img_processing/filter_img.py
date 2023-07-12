@@ -72,8 +72,7 @@ def getOrientation(pts, img):
 # image = cv.imread(args["image"])
 # print("Image compressed successfully")
 # print(file_size("compressed_image.jpg"))
-
-path = "/home/gregz/Files/simula_proj/src/img_processing/IMG_8615.jpg"
+path = "src/img_processing/IMG_8615.jpg"
 
 # print(file_size(path))
 ap = argparse.ArgumentParser()

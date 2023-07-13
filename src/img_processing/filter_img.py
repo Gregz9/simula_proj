@@ -148,6 +148,14 @@ for i, c in enumerate(contours):
 
     angle, cntr_local_axes, p2 = getOrientation(c, filter_img)
 
+test_node = (640, 1568)
+print(test_node) 
+print(p2)
+local_orient = (test_node[1] - cntr_local_axes[1], test_node[0] - cntr_local_axes[0])
+angle_deg = -np.rad2deg(atan2(local_orient[0], local_orient[1]))
+print(local_orient[::-1])
+print("Degree of rotation compared to the local x-axis: ", angle_deg+ 90)
+
 cv.imshow('Output image', filter_img)
 cv.waitKey(0)
 cv.destroyAllWindows() 

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import math
 
+
 def load_img(path):
     """Loads an image from the specified file path and resizes it by 50%.
 
@@ -16,6 +17,7 @@ def load_img(path):
     img = cv2.imread(path)
     return cv2.resize(img, (0,0), fx=0.5, fy=0.5)
 
+
 def print_img(img):
     """Prints an image using matplotlib.
 
@@ -24,6 +26,7 @@ def print_img(img):
     """
     plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     plt.show()
+
 
 def img_treshold(img, HMin=95, SMin=59, VMin=0, HMax=104, SMax=255, VMax=255):
     """Applies threshold to an image based on HSV values.
@@ -38,6 +41,7 @@ def img_treshold(img, HMin=95, SMin=59, VMin=0, HMax=104, SMax=255, VMax=255):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv,(HMin, SMin, VMin), (HMax, SMax, VMax) )
     return mask
+
 
 def get_countours(img, min_contour_area=500):
     """Get contours from an image.
@@ -81,6 +85,7 @@ def draw_contours(img, contours, hierarchy, idx=-1, color=(0, 255, 0), thickness
     cv2.drawContours(img, contours, idx, color, thickness, hierarchy=hierarchy)
     return img
 
+
 def get_centre(contours):
     """Finds the center of contours.
 
@@ -99,6 +104,7 @@ def get_centre(contours):
             centres.append((cx, cy))
     return centres
 
+
 def draw_centre(img, centres, color=(0, 0, 255), thickness=2):
     """Draws center points on an image.
 
@@ -114,6 +120,7 @@ def draw_centre(img, centres, color=(0, 0, 255), thickness=2):
     for centre in centres:
         cv2.circle(img, centre, 5, color, thickness)
     return img
+
 
 def sort_points(centres):
     """Sorts a list of points based on their sum and difference.
@@ -146,6 +153,7 @@ def sort_points(centres):
     bl = centres[np.argmax(diff)]
 
     return np.array([tl, tr, br, bl], dtype='float32')
+
 
 def descrew(img, sorted_pts, real_width_cm, real_height_cm):
     """Corrects the perspective of an image.

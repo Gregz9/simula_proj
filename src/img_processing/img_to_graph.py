@@ -1,7 +1,7 @@
 import networkx as nx
 from img_processing.img_tools import *
 
-def img_to_graph(path: str, print_image: bool=False) -> nx.Graph:
+def img_to_graph(path: str, print_image: bool=False, return_edge_lengths=False) -> nx.Graph:
     """Converts an image to a graph.
    
     Args:
@@ -40,10 +40,12 @@ def img_to_graph(path: str, print_image: bool=False) -> nx.Graph:
     if print_image:
         print_img(img)
 
-    # draw the graph
-    G = create_graph(centres, img)
-    #draw_graph(G)
-    return G, centres
+    if return_edge_lengths:
+        G, edge_lengths = create_graph(centres, img, return_edge_lengths=True)
+        return G, centres, edge_lengths
+    else:
+        G = create_graph(centres, img)
+        return G, centres
 
 def pre_process_img(path: str) -> tuple:
     """Processes an image to find its contours and centers.

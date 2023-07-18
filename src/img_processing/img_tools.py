@@ -196,15 +196,17 @@ def descrew(img, sorted_pts, real_width_cm, real_height_cm):
     return warp
 
 
-def create_graph(centres, img):
+def create_graph(centres, img, return_edge_lengths=False):
     """Creates a graph from a list of points.
 
     Args:
         centres (list): List of points.
         img (ndarray): Image related to the points.
+        return_edge_lengths (bool, optional): Whether to return the lengths of the edges. Defaults to False.
 
     Returns:
         nx.Graph: Graph created from the points.
+        list: List of lengths of the edges (if return_edge_lengths is True).
     """
 
     # Create a new graph
@@ -223,6 +225,8 @@ def create_graph(centres, img):
         )  # Calculate position in cm
         G.add_node(i, pos=pos_cm)
 
+    edge_lengths = []
+
     # Connect each node to every other node
     for i in range(len(centres)):
         for j in range(i + 1, len(centres)):
@@ -234,10 +238,15 @@ def create_graph(centres, img):
             line_length_cm_x = line_length_px / px_per_cm_x
             line_length_cm_y = line_length_px / px_per_cm_y
             # The weight is set to the average of the distances in the x and y directions
-            weight = (line_length_cm_x + line_length_cm_y) / 2
+            weight = round(((line_length_cm_x + line_length_cm_y) / 2), 2)
             G.add_edge(i, j, weight=weight)
+            edge_lengths.append(weight)
 
-    return G
+    if return_edge_lengths:
+        return G, edge_lengths
+    else:
+        return G
+
 
 
 def draw_graph(G, flipped=True, solution=False, colors=["skyblue"]):
@@ -245,6 +254,9 @@ def draw_graph(G, flipped=True, solution=False, colors=["skyblue"]):
 
     Args:
         G (nx.Graph): Graph to be drawn.
+        flipped (bool, optional): Whether to flip the graph vertically. Default is True.
+        solution (bool, optional): Whether to draw the graph as a solution. Default is False.
+        colors (list, optional): List of colors to be used for the nodes. Default is ["skyblue"].
     """
     pos = nx.get_node_attributes(G, "pos")
     labels = nx.get_edge_attributes(G, "weight")

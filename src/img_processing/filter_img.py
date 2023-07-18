@@ -80,7 +80,7 @@ def getOrientation(pts, img):
 # image = cv.imread(args["image"])
 # print("Image compressed successfully")
 # print(file_size("compressed_image.jpg"))
-path = "IMG_8615.jpg"
+path = "images/hsv_tresholded.jpg"
 
 # print(file_size(path))
 ap = argparse.ArgumentParser()
@@ -200,10 +200,27 @@ cv.putText(
 for i, c in enumerate(contours):
     area = cv.contourArea(c)
 
-    if area < 3700 or 100000 < area:
-        continue
 
-    cv.drawContours(filter_img, contours, i, (0, 0, 255), 2)
+    if area < 370 or 100000 < area:
+        continue
+    rect = cv.minAreaRect(contours[i])
+    box = cv.boxPoints(rect)
+    box = np.int0(box)
+
+    x,y,w,h = cv.boundingRect(contours[i])
+    if w > h: 
+        orientation_angle = np.degrees(rect[2])
+    else: 
+        orientation_angle = np.degrees(rect[2] + 90)
+
+    rotation_direction = "Clockwise" if rect[2] < -45 else "Counterclockwise"
+
+    # Draw the rectangle
+    cv.drawContours(img, [box], 0, (0, 255, 0), 2)
+
+    # Print the orientation angle and rotation direction
+    print("Orientation angle: {:.2f} degrees".format(orientation_angle))
+    print("Rotation direction: {}".format(rotation_direction))
 
     angle, cntr_local_axes, p2 = getOrientation(c, filter_img)
 
@@ -212,7 +229,7 @@ print(test_node)
 print(p2)
 local_orient = (test_node[1] - p2[1], test_node[0] - p2[0])
 degree = atan2(local_orient[0], local_orient[1])
-print(-degree * 180 / pi + 90)
+print(-degree * 180 / pi )
 
 angle_deg = -np.rad2deg(atan2(local_orient[0], local_orient[1]))
 print(local_orient[::-1])

@@ -1,11 +1,10 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-
 # Load the reference image and the current image
 reference_image = cv2.imread('normalImg/monday_17_cl151515.jpg', cv2.IMREAD_GRAYSCALE)
-# current_image = cv2.imread('monday_17_cl151720.jpg.jpg', cv2.IMREAD_GRAYSCALE)
-current_image = cv2.imread('normalImg/monday_17_cl143745.jpg', cv2.IMREAD_GRAYSCALE)
+current_image = cv2.imread('postItImg/monday_17_cl151340.jpg', cv2.IMREAD_GRAYSCALE)
+# current_image = cv2.imread('normalImg/monday_17_cl143745.jpg', cv2.IMREAD_GRAYSCALE)
 
 fig,ax = plt.subplots(1,2)
 

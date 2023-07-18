@@ -12,7 +12,8 @@ def hsv_finder(image, temp=False):
     #image = cv2.imread(img)
 
     # Create a window
-    cv2.namedWindow('image')
+    cv2.namedWindow('image', cv2.WINDOW_NORMAL)
+    cv2.resizeWindow('image', 400, 400)
 
     if temp:
         temp_hMin = 95
@@ -85,7 +86,7 @@ def hsv_finder(image, temp=False):
 #img = 'tsp_img_ex/2.jpg'
 #img = 'tsp_img_ex/3.jpg'
 #img = 'tsp_img_ex/4.jpg'
-img = 'tsp_img_ex/5.jpg'
+img = 'images/monday_17_0.jpg'
 
 img = cv2.imread(img)
 img = cv2.resize(img, (0,0), fx=0.2, fy=0.2)

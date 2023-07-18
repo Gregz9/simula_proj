@@ -8,19 +8,24 @@ from qiskit.tools.visualization import plot_histogram
 from qiskit.circuit.library import TwoLocal
 from qiskit_optimization.applications import Maxcut, Tsp
 from qiskit.algorithms.minimum_eigensolvers import SamplingVQE, NumPyMinimumEigensolver
-from qiskit.algorithms.optimizers import SPSA, COBYLA
+from qiskit.algorithms.optimizers import SPSA, COBYLA, NFT
 from qiskit.utils import algorithm_globals
 from qiskit.primitives import Sampler
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
 # Generating a graph of 4 nodes
 
-n = 5  # Number of nodes in graph
+n = 10  # Number of nodes in graph
 G = nx.Graph()
 G.add_nodes_from(np.arange(0, n, 1))
-elist = [(0, 1, 1.0), (0, 2, 1.0), (0, 3, 1.0), (1, 2, 1.0), (2, 3, 1.0)]
+elist = [(0, 1, 1.0), (0, 2, 1.0), (0, 3, 1.0), (1, 2, 1.0), (2, 3, 1.0), (3, 4, 1.0), (1, 4, 1.0), (2, 5, 1.0), (5, 7, 1.0), (1, 9, 1.0), (6, 8, 1.0), (2, 9, 1.0), (5, 6, 1.0), (3, 8, 1.0), (4, 8, 1.0), (7, 9, 1.0)]
 # tuple is (i,j,weight) where (i,j) is the edge
 G.add_weighted_edges_from(elist)
+
+# Add edges connecting all nodes to each other
+for i in range(n):
+    for j in range(i + 1, n):
+        G.add_edge(i, j, weight=1.0)
 
 colors = ["r" for node in G.nodes()]
 pos = nx.spring_layout(G)
@@ -45,7 +50,6 @@ for i in range(n):
         temp = G.get_edge_data(i, j, default=0)
         if temp != 0:
             w[i, j] = temp["weight"]
-print(w)
 
 best_cost_brute = 0
 for b in range(2**n):
@@ -57,7 +61,8 @@ for b in range(2**n):
     if best_cost_brute < cost:
         best_cost_brute = cost
         xbest_brute = x
-    print("case = " + str(x) + " cost = " + str(cost))
+    if abs(cost) == 25 and x == [1, 1, 1, 0, 0, 1, 0, 0, 0, 1]:
+        print("case = " + str(x) + " cost = " + str(cost))
 
 colors = ["r" if xbest_brute[i] == 0 else "c" for i in range(n)]
 draw_graph(G, colors, pos)
@@ -65,13 +70,13 @@ print("\nBest solution = " + str(xbest_brute) + " cost = " + str(best_cost_brute
 
 max_cut = Maxcut(w)
 qp = max_cut.to_quadratic_program()
-print(qp.prettyprint())
+# print(qp.prettyprint())
 
 
 qubitOp, offset = qp.to_ising()
-print("Offset:", offset)
-print("Ising Hamiltonian:")
-print(str(qubitOp))
+# print("Offset:", offset)
+# print("Ising Hamiltonian:")
+# print(str(qubitOp))
 
 # solving Quadratic Program using exact classical eigensolver
 exact = MinimumEigenOptimizer(NumPyMinimumEigensolver())
@@ -96,8 +101,10 @@ seed = 10598
 
 
 # construct SamplingVQE
-optimizer = COBYLA(maxiter=100)
-ry = TwoLocal(qubitOp.num_qubits, "ry", "cz", reps=5, entanglement="linear")
+# optimizer = COBYLA(maxiter=1000)
+optimizer = NFT(maxiter=750)
+# optimizer = SPSA(maxiter=500)
+ry = TwoLocal(qubitOp.num_qubits, "ry", "cz", reps=1, entanglement="linear")
 vqe = SamplingVQE(sampler=Sampler(), ansatz=ry, optimizer=optimizer)
 
 # run SamplingVQE

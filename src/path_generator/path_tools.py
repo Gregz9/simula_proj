@@ -244,9 +244,9 @@ def graph_from_solution_spatial(G: nx.Graph, solution: list, draw_graph: bool=Fa
 
     for i in range(len(solution)):
         if i == 0:  # The first distance is between the last and first nodes in the solution
-            node_distance = G[solution[-1]][solution[0]]['weight']
+            node_distance = nx.shortest_path_length(G, solution[-1], solution[0], weight='weight')
         else:  # The distance is between the current and previous nodes in the solution
-            node_distance = G[solution[i-1]][solution[i]]['weight']
+            node_distance = nx.shortest_path_length(G, solution[i-1], solution[i], weight='weight')
 
         total_distance += node_distance
         node_distance = round(node_distance, 2)
@@ -260,7 +260,9 @@ def graph_from_solution_spatial(G: nx.Graph, solution: list, draw_graph: bool=Fa
     total_distance = round(total_distance, 2)
 
     if start_zero:
+        print('solution before:', solution)
         solution, node_distances, edge_angles = start_at_zero(solution, node_distances, edge_angles)
+        print('solution after:', solution)
 
     if draw_graph:
         draw_solution_graph(centres, solution, node_distances)

@@ -39,7 +39,7 @@ def capture_and_send_instructions():
     
     print(f"Instructions sent: {instructions}")
 
-def get_instructions(image_file: str, spatial=False, show_graph=False) -> str:
+def get_instructions(image_file: str, spatial=False, show_graph=False, show_solution=False) -> str:
     """Gets instructions based on an image.
     
     Args:
@@ -72,6 +72,9 @@ def get_instructions(image_file: str, spatial=False, show_graph=False) -> str:
         solution_sorted, total_distance, node_distances, edge_angles = graph_from_solution_spatial(G, solution, draw_graph=True)
     else:
         solution_sorted, total_distance, node_distances, edge_angles = graph_from_solution(G, solution, draw_graph=True)
+
+    if show_solution:
+        print(solution_sorted)
 
     # step 4: give directions to the rover
     directions = give_directions(solution_sorted, edge_angles, node_distances)

@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
 import math
+import scipy.spatial
 
 
 def load_img(path):
@@ -349,3 +350,53 @@ def relative_orientation(template: str, current: str) -> np.float32:
     angle_deg = -np.degrees(angle_rad)
 
     return angle_deg
+
+
+def create_graph_spatial(centres, img, n_nearest):
+    """Creates a graph from a list of points where each point is only connected to its n nearest neighbors.
+
+    Args:
+        centres (list): List of points.
+        img (ndarray): Image related to the points.
+        n_nearest (int): The number of nearest neighbors to connect each node to.
+
+    Returns:
+        nx.Graph: Graph created from the points.
+        list: List of lengths of the edges.
+    """
+
+    # Create a new graph
+    G = nx.Graph()
+
+    # Calculate real world distance per pixel
+    real_width_cm, real_height_cm = 80 - 7.6, 96.5 - 7.6
+    px_per_cm_x = img.shape[1] / real_width_cm
+    px_per_cm_y = img.shape[0] / real_height_cm
+
+    # Add a node for each centre
+    for i, centre in enumerate(centres):
+        pos_cm = (
+            centre[0] / px_per_cm_x,
+            centre[1] / px_per_cm_y,
+        )  # Calculate position in cm
+        G.add_node(i, pos=pos_cm)
+
+    edge_lengths = []
+
+    # Build a k-d tree for efficient nearest neighbor search
+    tree = scipy.spatial.cKDTree(centres)
+
+    # Connect each node to its n nearest neighbors
+    for i, centre in enumerate(centres):
+        distances, indices = tree.query(centre, k=n_nearest+1)  # Query includes the point itself
+        for distance, j in zip(distances[1:], indices[1:]):  # Skip the first result (the point itself)
+            line_length_px = distance
+            line_length_cm_x = line_length_px / px_per_cm_x
+            line_length_cm_y = line_length_px / px_per_cm_y
+            # The weight is set to the average of the distances in the x and y directions
+            weight = round(((line_length_cm_x + line_length_cm_y) / 2), 2)
+            G.add_edge(i, j, weight=weight)
+            edge_lengths.append(weight)
+
+    
+    return G, edge_lengths

@@ -2,6 +2,7 @@ import math
 import random
 import networkx as nx
 import matplotlib.pyplot as plt
+import scipy.spatial
 import numpy as np
 
 
@@ -216,3 +217,52 @@ def give_directions(solution: list, edge_angles: list, node_distances: list, cur
                 print(f"{direction['action']} {direction['value']:.2f} degrees")
 
     return directions
+
+
+def graph_from_solution_spatial(G: nx.Graph, solution: list, draw_graph: bool=False, start_zero=True) -> tuple:
+    """Create a graph from the solution.
+    
+    Note: this version of the function is intended for sparse graphs where each node is not connected to all others.
+    
+    Args:   
+        G (nx.Graph): The input graph.
+        solution (list): The order of nodes that the rover should visit.
+        draw_graph (bool, optional): Whether to draw the graph. Default is False.
+        start_zero (bool, optional): Whether to start the solution at node 0. Default is True.
+        
+    Returns:   
+        tuple: A tuple containing the total distance, node_distances, and edge_angles. 
+    """
+
+    # Get the node positions from the graph
+    centres = nx.get_node_attributes(G, 'pos')
+
+    # Calculate the total distance, distances between nodes, and the angles of the edges
+    total_distance = 0
+    node_distances = []
+    edge_angles = []
+
+    for i in range(len(solution)):
+        if i == 0:  # The first distance is between the last and first nodes in the solution
+            node_distance = G[solution[-1]][solution[0]]['weight']
+        else:  # The distance is between the current and previous nodes in the solution
+            node_distance = G[solution[i-1]][solution[i]]['weight']
+
+        total_distance += node_distance
+        node_distance = round(node_distance, 2)
+        node_distances.append(node_distance)
+
+        # Calculate angle of the edge
+        edge_angle = calculate_angle(centres[solution[i-1]], centres[solution[i]])
+        edge_angle = round(edge_angle, 2)
+        edge_angles.append(edge_angle)
+
+    total_distance = round(total_distance, 2)
+
+    if start_zero:
+        solution, node_distances, edge_angles = start_at_zero(solution, node_distances, edge_angles)
+
+    if draw_graph:
+        draw_solution_graph(centres, solution, node_distances)
+
+    return solution, total_distance, node_distances, edge_angles

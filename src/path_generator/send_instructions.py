@@ -4,40 +4,72 @@ import cv2
 import tempfile
 import socket
 import json
+import sys
+import os
 
 from img_processing.img_to_graph import *
 from img_processing.img_tools import *
 from path_generator.path_tools import *
 
+import os
+import cv2
+import socket
+import json
+import rover  # Assuming this module is imported
+
 def capture_and_send_instructions():
     """Captures an image from the webcam, gets instructions based on the image, 
     and sends those instructions to the rover.
     """
+    
+    path = os.getcwd()
+    sys.path.append(f'{path}/src/')
+    os.getcwd()
 
+    sys.path.insert(1, os.path.join(sys.path[0], '../src'))
+    
+    # Set the path for the temporary image file
+    temp_file_path = f'{path}/test_images/temp.jpg'
+    
     # Capture image from webcam
     cap = cv2.VideoCapture(0)
-    ret, frame = cap.read()
+    
+    while True:
+        ret, frame = cap.read()
+
+        cv2.imshow('Webcam', frame)
+
+        # Check for space key press
+        key = cv2.waitKey(1)
+        if key == ord(' '):  # Space key
+            # Save the image to the temporary file
+            cv2.imwrite(temp_file_path, frame)
+            cv2.destroyAllWindows()  # Close the window
+            break
+
     cap.release()
 
     if not ret:
         print("Failed to capture image")
         return
 
-    # Save image to a temporary file
-    temp_file = tempfile.NamedTemporaryFile(suffix=".jpg", delete=False)
-    cv2.imwrite(temp_file.name, frame)
-
     # Get instructions based on the image
-    instructions = get_instructions(temp_file.name)
+    #instructions = get_instructions(temp_file_path)
+    instructions = get_instructions('/home/frida/git/simula_proj/test_images/n04.jpg')
 
     # Set up client socket
-    HOST = 'rover_ip'  # The remote host (replace with the rover's actual IP address)
+    HOST = '192.168.50.108'  # The remote host (the rover's actual IP address)
     PORT = 50007  # The same port as used by the server
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect((HOST, PORT))
-        s.sendall(instructions.encode())
+        s.sendall(json.dumps(instructions).encode())
     
     print(f"Instructions sent: {instructions}")
+
+    # Delete the temporary image file
+    if os.path.exists(temp_file_path):
+        os.remove(temp_file_path)
+
 
 def get_instructions(image_file: str, spatial=False, show_graph=False, show_solution=False) -> str:
     """Gets instructions based on an image.

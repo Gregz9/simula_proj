@@ -6,6 +6,9 @@ import tty
 import termios
 import json
 
+# speed
+speed = 60
+
 # Servo numbers
 servo_FL = 9
 servo_RL = 11
@@ -115,7 +118,7 @@ def main():
         while True:
             data = conn.recv(1024)
             if not data: break
-            instructions = json.loads(data)
+            instructions = json.load(json.loads(data))
             executeInstructions(instructions)
     except KeyboardInterrupt:
         pass

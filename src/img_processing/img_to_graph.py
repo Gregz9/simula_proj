@@ -21,7 +21,6 @@ def img_to_graph(path: str, print_image: bool=False, return_edge_lengths=False) 
     img = draw_contours(img, contours, hierarchy, color=(255, 0, 0))
     centres = get_centre(contours)
     img = draw_centre(img, centres, color=(255, 0, 0))
-    #print_img(img)
 
     # descrew image
     sorted_pts = sort_points(centres)

@@ -86,7 +86,7 @@ def hsv_finder(image, temp=False):
 #img = 'tsp_img_ex/2.jpg'
 #img = 'tsp_img_ex/3.jpg'
 #img = 'tsp_img_ex/4.jpg'
-img = 'images/monday_17_0.jpg'
+img = 'img_rover/move_3.jpg'
 
 img = cv2.imread(img)
 img = cv2.resize(img, (0,0), fx=0.2, fy=0.2)

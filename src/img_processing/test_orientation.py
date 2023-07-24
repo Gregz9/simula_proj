@@ -3,21 +3,24 @@ import numpy as np
 import matplotlib.pyplot as plt
 from img_tools import relative_orientation
 
-template = "/home/gregz/Files/simula_proj/src/webcam/normalImg/monday_17_cl151515.jpg"
-current = "/home/gregz/Files/simula_proj/src/webcam/normalImg/monday_17_cl151720.jpg"
+angles = []
+for i in range(2,9,1): 
+    template = f"normalImg/{i-1}.jpg"
+    current = f"normalImg/{i}.jpg"
 
+    angle = relative_orientation(template, current)
+    angles.append(angle)
+    print(f"The relative angle difference between two frames: {angle}")
 
+    template = cv.imread(template)
+    current = cv.imread(current)
+    fig, ax = plt.subplots(1,2) 
 
-angle = relative_orientation(template, current)
-print(f"The relative angle difference between two frames: {angle}")
+    ax[0].imshow(cv.cvtColor(template, cv.COLOR_BGR2RGB))
+    ax[0].set_title("Template/Reference")
 
-template = cv.imread(template)
-current = cv.imread(current)
-fig, ax = plt.subplots(1,2) 
+    ax[1].imshow(cv.cvtColor(current, cv.COLOR_BGR2RGB))
+    ax[1].set_title("Current Frame")
+    plt.show()
 
-ax[0].imshow(cv.cvtColor(template, cv.COLOR_BGR2RGB))
-ax[0].set_title("Template/Reference")
-
-ax[1].imshow(cv.cvtColor(current, cv.COLOR_BGR2RGB))
-ax[1].set_title("Current Frame")
-plt.show()
+print(angles)

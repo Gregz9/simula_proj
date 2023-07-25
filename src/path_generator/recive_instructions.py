@@ -5,9 +5,11 @@ import sys
 import tty
 import termios
 import json
+import math
 
 # speed
-speed = 60
+speed = 100
+diagonal_speed = speed * math.sqrt(2)
 
 # Servo numbers
 servo_FL = 9
@@ -56,6 +58,23 @@ def goRight():
     rover.setServo(servo_RL, -20)
     rover.setServo(servo_RR, -20)
 
+def goDiagonalRight():
+    """Moves the rover diagonally right by one step (sqrt(2)*2 cm)."""
+    rover.setServo(servo_FL, 0)
+    rover.setServo(servo_FR, -20)
+    rover.setServo(servo_RL, -20)
+    rover.setServo(servo_RR, 0)
+    rover.forward(diagonal_speed)
+
+
+def goDiagonalLeft():
+    """Moves the rover diagonally left by one step (sqrt(2)*2 cm)."""
+    rover.setServo(servo_FL, -20)
+    rover.setServo(servo_FR, 0)
+    rover.setServo(servo_RL, 0)
+    rover.setServo(servo_RR, -20)
+    rover.forward(diagonal_speed)
+
 
 def executeInstructions(instructions):
     """Parses the instructions provided and calls the appropriate functions.
@@ -69,6 +88,8 @@ def executeInstructions(instructions):
         action = instruction['action']
         value = instruction['value']
 
+        print(f'Executing {action} {value}')
+
         if action == 'Move':
             moveDistance(value) # we will define this function next
         elif action == 'Turn':
@@ -81,7 +102,8 @@ def moveDistance(distance):
     Args:
         distance (float): Distance in centimeters to move.
     """
-    steps = int(distance / 4)  # Convert the distance to steps (one step = 4 cm)
+    print('Moving', distance)
+    steps = int(distance)  
     for _ in range(steps):
         goForward()  # Move the rover one step forward
         time.sleep(0.1)  # Adjust this delay as needed, according to your rover's speed
@@ -94,6 +116,7 @@ def turnAngle(angle):
     Args:
         angle (float): Angle in degrees to rotate. Positive values rotate to the right and negative values to the left.
     """
+    print('Turning', angle)
     steps = int(angle / (90/4))  # Convert the angle to steps (one rotation step = 90/4 degrees)
     if steps > 0:  # Positive steps mean turning right
         for _ in range(steps):
@@ -118,7 +141,7 @@ def main():
         while True:
             data = conn.recv(1024)
             if not data: break
-            instructions = json.load(json.loads(data))
+            instructions = json.loads(json.loads(data))
             executeInstructions(instructions)
     except KeyboardInterrupt:
         pass

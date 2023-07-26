@@ -368,32 +368,67 @@ def relative_orientation(template: str, current: str) -> np.float32:
 
 
 def real_world_dist(coords_rover, coords_node, ratio_x, ratio_y):
+    """
+    Computes the real distance between the rover and a node in the graph
+    based on the coordinates of the centers of both objects, and ratio
+    of distance to pixel. 
+
+    Args: 
+        coords_rover (np.ndarray): Two integer values representing the x- and y- coordinates of the rover
+        coords_node (np.ndarray): Two integer values representing the x- and y- coordinates of the node
+        ratio_x (float): Decimal number representing the ratio of distance per pixel along the x-axis
+        ratio_y (float): Decimal number representing the ratio of distance per pixel along the y-axis
+
+    Returns: 
+        float representing the real world distance between the rover and one od the nodes in the graph.
+
+    """
+
     temp = coords_rover - coords_node
     temp[0] *= ratio_y
     temp[1] *= ratio_x
     return np.sqrt(temp[0] ** 2 + temp[1] ** 2)
 
-def detect_rover(img, descrew=False):
+
+def detect_rover(img, descrew=True):
     """
     Detects the rover in an image that has not been transformed/"descrewed"
 
-    Args: 
+    Args:
         img (np.ndarray): Image to extract coordinates from
         descrew (boolean): Flag which tells if image is transformed or not
 
-    Returns: 
+    Returns:
         np.ndarray containing the coordinates of the rover in the image
 
     """
-    if not descrew: 
+    if not descrew:
         mask = img_treshold(img, HMin=0, SMin=0, VMin=0, HMax=179, SMax=255, VMax=94)
-    else: 
+    else:
         mask = img_treshold(img, HMin=0, SMin=0, VMin=0, HMax=179, SMax=255, VMax=101)
 
     contours, _ = get_countours(mask)
     centres = get_centre(contours)
     # img = draw_centre(img, [centre[0]], color(255,0,0)
     return np.array(centre[0])
+
+
+def detect_nodes(img, descrew=True):
+    """
+    Detects the coordinates of nodes in an image that has been "descrewed"
+
+    Args:
+        img (np.ndarray): Image to extract coordinates from
+
+    Returns:
+        np.ndarray containing the coordinates of the nodes within the image
+    """
+    mask = img_treshold(
+        second_img, HMin=69, SMin=97, Vmin=94, HMax=179, SMax=162, VMax=151
+    )
+    contours, hierarchy = get_countours(mask, 100)
+    centres = get_centre(contours)
+    return centres
 
 
 def create_graph_spatial(centres, img, n_nearest):
@@ -447,4 +482,3 @@ def create_graph_spatial(centres, img, n_nearest):
             edge_lengths.append(weight)
 
     return G, edge_lengths
-

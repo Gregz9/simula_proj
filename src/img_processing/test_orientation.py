@@ -5,12 +5,16 @@ from img_tools import relative_orientation
 
 angles = []
 # for i in range(2,9,1): 
-template = f"feat_img/feat_det0.jpg"
 # current = f"feat_img/feat_det2.jpg"
 # template = f"normalImg/1.jpg"
 # current = f"normalImg/{i}.jpg"
-current = f"img_graph/rover_19.jpg"
 # current = "descrew_rover.jpg"
+
+template = f"feat_img/feat_det0.jpg"
+current = f"img_graph/rover_19.jpg"
+
+# template = "final_graph/graph_empty_rover.jpg"
+current =  "final_graph/graph_empty_rover5.jpg"
 
 angle = relative_orientation(template, current)
 angles.append(angle)

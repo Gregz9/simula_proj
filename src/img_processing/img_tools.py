@@ -157,7 +157,7 @@ def sort_points(centres):
     return np.array([tl, tr, br, bl], dtype="float32")
 
 
-def descrew(img, sorted_pts, real_width_cm, real_height_cm):
+def descrew(img, sorted_pts, real_width_cm, real_height_cm, dist_meas=False):
     """Corrects the perspective of an image.
 
     Args:
@@ -180,19 +180,35 @@ def descrew(img, sorted_pts, real_width_cm, real_height_cm):
     dst_width_px = int(real_width_cm * dpi / 2.54)
     dst_height_px = int(real_height_cm * dpi / 2.54)
 
-    dst = np.array(
-        [
-            [0, 0],
-            [dst_width_px - 1, 0],
-            [dst_width_px - 1, dst_height_px - 1],
-            [0, dst_height_px - 1],
-        ],
-        dtype="float32",
-    )
+    if not dist_meas:
+        dst = np.array(
+            [
+                [0, 0],
+                [dst_width_px - 1, 0],
+                [dst_width_px - 1, dst_height_px - 1],
+                [0, dst_height_px - 1],
+            ],
+            dtype="float32",
+        )
+    else:
+        dst = np.array(
+            [
+                [0, 0],
+                [dst_width_px // 5 - 1, 0],
+                [dst_width_px // 5 - 1, dst_height_px // 5 - 1],
+                [0, dst_height_px // 5 - 1],
+            ],
+            dtype="float32",
+        )
 
     # Calculate the perspective transform matrix and warp the perspective.
     M = cv2.getPerspectiveTransform(sorted_pts, dst)
+    dst_width_px = dst_width_px // 5 if dist_meas else dst_width_px
+    dst_height_px = dst_height_px // 5 if dist_meas else dst_height_px
+
     warp = cv2.warpPerspective(img, M, (dst_width_px, dst_height_px))
+    print(f"New width: {dst_width_px}")
+    print(f"New height: {dst_height_px}")
 
     return warp
 
@@ -247,7 +263,6 @@ def create_graph(centres, img, return_edge_lengths=False):
         return G, edge_lengths
     else:
         return G
-
 
 
 def draw_graph(G, flipped=True, solution=False, colors=["skyblue"]):
@@ -352,6 +367,35 @@ def relative_orientation(template: str, current: str) -> np.float32:
     return angle_deg
 
 
+def real_world_dist(coords_rover, coords_node, ratio_x, ratio_y):
+    temp = coords_rover - coords_node
+    temp[0] *= ratio_y
+    temp[1] *= ratio_x
+    return np.sqrt(temp[0] ** 2 + temp[1] ** 2)
+
+def detect_rover(img, descrew=False):
+    """
+    Detects the rover in an image that has not been transformed/"descrewed"
+
+    Args: 
+        img (np.ndarray): Image to extract coordinates from
+        descrew (boolean): Flag which tells if image is transformed or not
+
+    Returns: 
+        np.ndarray containing the coordinates of the rover in the image
+
+    """
+    if not descrew: 
+        mask = img_treshold(img, HMin=0, SMin=0, VMin=0, HMax=179, SMax=255, VMax=94)
+    else: 
+        mask = img_treshold(img, HMin=0, SMin=0, VMin=0, HMax=179, SMax=255, VMax=101)
+
+    contours, _ = get_countours(mask)
+    centres = get_centre(contours)
+    # img = draw_centre(img, [centre[0]], color(255,0,0)
+    return np.array(centre[0])
+
+
 def create_graph_spatial(centres, img, n_nearest):
     """Creates a graph from a list of points where each point is only connected to its n nearest neighbors.
 
@@ -388,8 +432,12 @@ def create_graph_spatial(centres, img, n_nearest):
 
     # Connect each node to its n nearest neighbors
     for i, centre in enumerate(centres):
-        distances, indices = tree.query(centre, k=n_nearest+1)  # Query includes the point itself
-        for distance, j in zip(distances[1:], indices[1:]):  # Skip the first result (the point itself)
+        distances, indices = tree.query(
+            centre, k=n_nearest + 1
+        )  # Query includes the point itself
+        for distance, j in zip(
+            distances[1:], indices[1:]
+        ):  # Skip the first result (the point itself)
             line_length_px = distance
             line_length_cm_x = line_length_px / px_per_cm_x
             line_length_cm_y = line_length_px / px_per_cm_y
@@ -398,5 +446,5 @@ def create_graph_spatial(centres, img, n_nearest):
             G.add_edge(i, j, weight=weight)
             edge_lengths.append(weight)
 
-    
     return G, edge_lengths
+

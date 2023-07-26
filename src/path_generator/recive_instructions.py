@@ -5,11 +5,10 @@ import sys
 import tty
 import termios
 import json
-import math
 
 # speed
 speed = 100
-diagonal_speed = speed * math.sqrt(2)
+time_step = 1
 
 # Servo numbers
 servo_FL = 9
@@ -24,56 +23,49 @@ PORT = 50007  # Arbitrary non-privileged port
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
 
-
-def goForward():
-    """Moves the rover forward by one step (4 cm)."""
+def resetServos():
+    """Resets the servos to their default positions."""
     rover.setServo(servo_FL, 0)
     rover.setServo(servo_FR, 0)
     rover.setServo(servo_RL, 0)
     rover.setServo(servo_RR, 0)
+
+def goForward():
+    """Moves the rover forward by one step (4 cm)."""
+    # rover.setServo(servo_FL, 0)
+    # rover.setServo(servo_FR, 0)
+    # rover.setServo(servo_RL, 0)
+    # rover.setServo(servo_RR, 0)
     rover.forward(speed)
 
 
 def goReverse():
     """Moves the rover in reverse by one step (4 cm)."""
-    rover.setServo(servo_FL, 0)
-    rover.setServo(servo_FR, 0)
-    rover.setServo(servo_RL, 0)
-    rover.setServo(servo_RR, 0)
+    # rover.setServo(servo_FL, 0)
+    # rover.setServo(servo_FR, 0)
+    # rover.setServo(servo_RL, 0)
+    # rover.setServo(servo_RR, 0)
     rover.reverse(speed)
 
-
-def goLeft():
-    """Rotates the rover to the left by one rotation step (90/4 degrees)."""
-    rover.setServo(servo_FL, -20)
-    rover.setServo(servo_FR, -20)
-    rover.setServo(servo_RL, 20)
-    rover.setServo(servo_RR, 20)
-
-
-def goRight():
+def spinRight(): 
     """Rotates the rover to the right by one rotation step (90/4 degrees)."""
-    rover.setServo(servo_FL, 20)
-    rover.setServo(servo_FR, 20)
-    rover.setServo(servo_RL, -20)
-    rover.setServo(servo_RR, -20)
-
-def goDiagonalRight():
-    """Moves the rover diagonally right by one step (sqrt(2)*2 cm)."""
     rover.setServo(servo_FL, 0)
-    rover.setServo(servo_FR, -20)
-    rover.setServo(servo_RL, -20)
-    rover.setServo(servo_RR, 0)
-    rover.forward(diagonal_speed)
-
-
-def goDiagonalLeft():
-    """Moves the rover diagonally left by one step (sqrt(2)*2 cm)."""
-    rover.setServo(servo_FL, -20)
     rover.setServo(servo_FR, 0)
     rover.setServo(servo_RL, 0)
-    rover.setServo(servo_RR, -20)
-    rover.forward(diagonal_speed)
+    rover.setServo(servo_RR, 0)
+    rover.spinRight(speed)
+    time.sleep(time_step)
+    rover.stop()
+
+def spinLeft(): 
+    """Rotates the rover to the right by one rotation step (90/4 degrees)."""
+    rover.setServo(servo_FL, 0)
+    rover.setServo(servo_FR, 0)
+    rover.setServo(servo_RL, 0)
+    rover.setServo(servo_RR, 0)
+    rover.spinLeft(speed)
+    time.sleep(time_step)
+    rover.stop()
 
 
 def executeInstructions(instructions):
@@ -94,6 +86,8 @@ def executeInstructions(instructions):
             moveDistance(value) # we will define this function next
         elif action == 'Turn':
             turnAngle(value) # we will define this function next
+        
+        time.sleep(time_step) 
 
 
 def moveDistance(distance):
@@ -103,10 +97,10 @@ def moveDistance(distance):
         distance (float): Distance in centimeters to move.
     """
     print('Moving', distance)
-    steps = int(distance)  
+    steps = int(distance / 10)  
     for _ in range(steps):
         goForward()  # Move the rover one step forward
-        time.sleep(0.1)  # Adjust this delay as needed, according to your rover's speed
+        time.sleep(time_step)  # Adjust this delay as needed, according to your rover's speed
     rover.stop()  # Stop the rover after moving
 
 
@@ -120,12 +114,12 @@ def turnAngle(angle):
     steps = int(angle / (90/4))  # Convert the angle to steps (one rotation step = 90/4 degrees)
     if steps > 0:  # Positive steps mean turning right
         for _ in range(steps):
-            goRight()  # Rotate the rover one step to the right
-            time.sleep(0.1)  # Adjust this delay as needed, according to your rover's rotation speed
+            spinRight()  # Rotate the rover one step to the right
+            time.sleep(time_step)  # Adjust this delay as needed, according to your rover's rotation speed
     else:  # Negative steps mean turning left
         for _ in range(abs(steps)):
-            goLeft()  # Rotate the rover one step to the left
-            time.sleep(0.1)  # Adjust this delay as needed, according to your rover's rotation speed
+            spinLeft()  # Rotate the rover one step to the left
+            time.sleep(time_step)  # Adjust this delay as needed, according to your rover's rotation speed
     rover.stop()  # Stop the rover after rotating
 
 
@@ -133,6 +127,7 @@ def main():
     """Main function to initialize the rover and the server, and to listen for and execute incoming instructions.
     """
     rover.init(0)
+    resetServos()
     print("Waiting for connection...")
     s.listen(1)
     conn, addr = s.accept()
@@ -146,6 +141,7 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
+        resetServos()
         conn.close()
         rover.cleanup()
 

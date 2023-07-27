@@ -8,7 +8,12 @@ import json
 
 # speed
 speed = 100
-time_step = 1
+time_step = 0.5
+
+# One step distance in real life
+one_step_distance = 4.3
+one_step_angle_left = 90/6.5
+one_step_angle_right = 90/7.5
 
 # Servo numbers
 servo_FL = 9
@@ -58,7 +63,7 @@ def spinRight():
     rover.stop()
 
 def spinLeft(): 
-    """Rotates the rover to the right by one rotation step (90/4 degrees)."""
+    """Rotates the rover to the left by one rotation step (90/4 degrees)."""
     rover.setServo(servo_FL, 0)
     rover.setServo(servo_FR, 0)
     rover.setServo(servo_RL, 0)
@@ -97,7 +102,7 @@ def moveDistance(distance):
         distance (float): Distance in centimeters to move.
     """
     #print('Moving', distance)
-    steps = round(distance / 8.5)  
+    steps = round(distance / one_step_distance)  # Convert the distance to steps (one step = 4 cm
     for _ in range(steps):
         goForward()  # Move the rover one step forward
         time.sleep(time_step)  # Adjust this delay as needed, according to your rover's speed
@@ -110,17 +115,20 @@ def turnAngle(angle):
     Args:
         angle (float): Angle in degrees to rotate. Positive values rotate to the right and negative values to the left.
     """
-    #print('Turning', angle)
-    steps = round(angle / (90/4))  # Convert the angle to steps (one rotation step = 90/4 degrees)
-    if steps > 0:  # Positive steps mean turning right
+    if angle < 0:  # Positive angle means turning right
+        steps = round(abs(angle) / one_step_angle_right)  
+        print("Turning right", steps)
         for _ in range(steps):
             spinRight()  # Rotate the rover one step to the right
             time.sleep(time_step)  # Adjust this delay as needed, according to your rover's rotation speed
-    else:  # Negative steps mean turning left
-        for _ in range(abs(steps)):
+    else:  # Negative angle means turning left
+        steps = round(abs(angle) / one_step_angle_left)
+        print("Turning left", steps)
+        for _ in range(steps):
             spinLeft()  # Rotate the rover one step to the left
             time.sleep(time_step)  # Adjust this delay as needed, according to your rover's rotation speed
     rover.stop()  # Stop the rover after rotating
+
 
 
 def main():

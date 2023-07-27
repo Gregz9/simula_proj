@@ -71,7 +71,7 @@ def capture_and_send_instructions():
         os.remove(temp_file_path)
 
 
-def get_instructions(image_file: str, spatial=False, show_graph=True, show_solution=False) -> str:
+def get_instructions(image_file: str, spatial=False, show_graph=False, show_solution=True) -> str:
     """Gets instructions based on an image.
     
     Args:

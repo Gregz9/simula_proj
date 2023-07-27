@@ -96,8 +96,8 @@ def moveDistance(distance):
     Args:
         distance (float): Distance in centimeters to move.
     """
-    print('Moving', distance)
-    steps = int(distance / 10)  
+    #print('Moving', distance)
+    steps = round(distance / 8.5)  
     for _ in range(steps):
         goForward()  # Move the rover one step forward
         time.sleep(time_step)  # Adjust this delay as needed, according to your rover's speed
@@ -110,8 +110,8 @@ def turnAngle(angle):
     Args:
         angle (float): Angle in degrees to rotate. Positive values rotate to the right and negative values to the left.
     """
-    print('Turning', angle)
-    steps = int(angle / (90/4))  # Convert the angle to steps (one rotation step = 90/4 degrees)
+    #print('Turning', angle)
+    steps = round(angle / (90/4))  # Convert the angle to steps (one rotation step = 90/4 degrees)
     if steps > 0:  # Positive steps mean turning right
         for _ in range(steps):
             spinRight()  # Rotate the rover one step to the right

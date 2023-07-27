@@ -8,12 +8,13 @@ import json
 
 # speed
 speed = 100
-time_step = 0.5
+time_step = 0.3
+sleep_step = time_step
 
 # One step distance in real life
-one_step_distance = 4.3
-one_step_angle_left = 90/6.5
-one_step_angle_right = 90/7.5
+one_step_distance = 2.4
+one_step_angle_left = 90/12
+one_step_angle_right = 90/12
 
 # Servo numbers
 servo_FL = 9
@@ -42,6 +43,8 @@ def goForward():
     # rover.setServo(servo_RL, 0)
     # rover.setServo(servo_RR, 0)
     rover.forward(speed)
+    #time.sleep(sleep_step)
+    #rover.stop()
 
 
 def goReverse():
@@ -59,7 +62,7 @@ def spinRight():
     rover.setServo(servo_RL, 0)
     rover.setServo(servo_RR, 0)
     rover.spinRight(speed)
-    time.sleep(time_step)
+    time.sleep(sleep_step)
     rover.stop()
 
 def spinLeft(): 
@@ -69,7 +72,7 @@ def spinLeft():
     rover.setServo(servo_RL, 0)
     rover.setServo(servo_RR, 0)
     rover.spinLeft(speed)
-    time.sleep(time_step)
+    time.sleep(sleep_step)
     rover.stop()
 
 
@@ -92,7 +95,7 @@ def executeInstructions(instructions):
         elif action == 'Turn':
             turnAngle(value) # we will define this function next
         
-        time.sleep(time_step) 
+        time.sleep(1) 
 
 
 def moveDistance(distance):

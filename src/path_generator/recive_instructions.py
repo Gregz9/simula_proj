@@ -1,11 +1,11 @@
 # Rover
-
-import rover, time, socket
+# import rover 
+import time, socket
 import sys
 import tty
 import termios
 import json
-
+import cv2 as cv
 # speed
 speed = 100
 time_step = 0.3
@@ -74,7 +74,7 @@ def spinLeft():
     rover.spinLeft(speed)
     time.sleep(sleep_step)
     rover.stop()
-
+    
 
 def executeInstructions(instructions):
     """Parses the instructions provided and calls the appropriate functions.
@@ -97,6 +97,24 @@ def executeInstructions(instructions):
         
         time.sleep(1) 
 
+def executeInstrNCorrection():
+
+    in_file = open("instructions.json", "r")
+
+    data = json.loads(json.loads(in_file.read()))
+    # print(data)
+    print(data["directions"])
+    print(data["directions"][1])
+    print(f"Execucting {data['directions'][0]['action']} by {data['directions'][0]['value']}")
+    pass
+    # Take correcting picture
+    
+def check_if_correction(action: str, value: float):
+
+    # if action == "turn": 
+    pass
+        
+    
 
 def moveDistance(distance):
     """Move the rover a certain distance in cm
@@ -137,6 +155,7 @@ def turnAngle(angle):
 def main():
     """Main function to initialize the rover and the server, and to listen for and execute incoming instructions.
     """
+
     rover.init(0)
     resetServos()
     print("Waiting for connection...")
@@ -148,7 +167,7 @@ def main():
             data = conn.recv(1024)
             if not data: break
             instructions = json.loads(json.loads(data))
-            executeInstructions(instructions)
+            executeInstructions(instructions["directions"])
     except KeyboardInterrupt:
         pass
     finally:

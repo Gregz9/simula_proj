@@ -34,7 +34,23 @@ from img_processing.img_tools import *
 from path_generator.path_tools import *
 
 argsParse = argparse.ArgumentParser()
-argsParse.add_argument("-p", "--port", required=True, type=int, help="Port number to connect sockets over")
+argsParse.add_argument(
+    "-p", "--port", required=True, type=int, help="Port number to connect sockets over"
+)
+argsParse.add_argument(
+    "-sf",
+    "--skip_final",
+    required=False,
+    action=argparse.BooleanOptionalAction,
+    help="Flag which helps decide if final rotation layer shall be skipped",
+)
+argsParse.add_argument(
+    "-w",
+    "--write",
+    required=False,
+    help="flag indicating if instruction should be written to file",
+    action="store_true",
+)
 
 args = argsParse.parse_args()
 
@@ -70,7 +86,7 @@ else:
 
 # original_image = cv.imread("/home/gregz/Files/simula_proj/test_images/n10.jpg")
 # graph, cntr_coords = img_to_graph(
-    # path="/home/gregz/Files/simula_proj/test_images/n12.jpg", print_image=False
+# path="/home/gregz/Files/simula_proj/test_images/n12.jpg", print_image=False
 # )
 img_path = src_dir + "/img_processing/final_graph/graph.jpg"
 graph, cntr_coords = img_to_graph(img_path, print_image=True, dist_meas=True)
@@ -89,7 +105,7 @@ for i in range(N):
     for j in range(N):
         temp = graph.get_edge_data(i, j, default=0)
         if temp != 0:
-            w[i, j] = 1 
+            w[i, j] = 1
             # true_weights[i, j] = temp["weight"]
 # true_weights = np.where(true_weights == 0.0, np.nan, true_weights)
 
@@ -138,7 +154,7 @@ init_ansatz = EfficientSU2(
     ["rx", "cy"],
     entanglement="circular",
     reps=1,
-    # skip_final_rotation_layer=True,
+    skip_final_rotation_layer=args.skip_final,
 )
 vqe = SamplingVQE(sampler=Sampler(), ansatz=init_ansatz, optimizer=optimizer)
 result = vqe.compute_minimum_eigenvalue(qubitOp)
@@ -163,13 +179,28 @@ graph2, cntr_coords = img_to_graph(img_path, dist_meas=True)
 # solutions = create_random_array(len(cntr_coords))
 path_to_walk = [i for i in range(len(cntr_coords))]
 
-solution_sorted, total_distance, node_distances, edge_angles = graph_from_solution(graph2, path_to_walk, draw_graph=True)
-directions = give_directions(solution_sorted, edge_angles, node_distances, current_angle=90, start_distance = 8)
-solution = [int(solution[i]) for i in range(len(solution))]
+solution_sorted, total_distance, node_distances, edge_angles = graph_from_solution(
+    graph2, path_to_walk, draw_graph=True
+)
 
-solution_data = {"directions" : directions, "colors" : colors, "node_coords": cntr_coords}
+distance_from_to = {}
+for i in range(1, len(solution_sorted)): 
+    distance_from_to[str((solution_sorted[i-1], solution_sorted[i]))] = node_distances[i-1]
+    if i == len(solution_sorted) -1: 
+        distance_from_to[str((solution_sorted[i], solution_sorted[0]))] = node_distances[i]
+
+directions = give_directions(
+    solution_sorted, edge_angles, node_distances, current_angle=90, start_distance=8
+)
+
+solution_data = {"directions": directions, "colors": colors, "node_coords": cntr_coords, "node_distances":distance_from_to}
 
 json_directions = json.dumps(solution_data, indent=2)
+print(solution_data) 
+
+if args.write:
+    with open("instructions.json", "w") as outfile:
+        json.dump(json_directions, outfile)
 
 PORT = args.port
 # HOST = "192.168.50.108"
@@ -189,16 +220,15 @@ print("Connected")
 
 msg_count = 0
 while True:
-    
-    if msg_count == 1: 
+    if msg_count == 1:
         reply = json_directions
-    else: 
+    else:
         reply = str(input("Enter message"))
-        if reply == "terminate": 
+        if reply == "terminate":
             conn.close()
-            exit() 
+            exit()
     conn.send(reply.encode("utf-8"))
-    
+
     data = conn.recv(1024).decode("utf-8")
     print("Response: ", data)
     msg_count += 1

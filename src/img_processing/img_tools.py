@@ -336,9 +336,9 @@ def draw_centre_and_lines(img, centres, color=(0, 0, 255), thickness=2):
     return img
 
 
-def relative_orientation(template: str, current: str) -> np.float32:
-    reference_frame = cv2.imread(template, cv2.IMREAD_GRAYSCALE)
-    current_frame = cv2.imread(current, cv2.IMREAD_GRAYSCALE)
+def relative_orientation(template , current ) -> np.float32:
+    reference_frame = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+    current_frame = cv2.cvtColor(current, cv2.COLOR_BGR2GRAY)
 
     sift = cv2.SIFT_create()
 

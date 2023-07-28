@@ -1,7 +1,7 @@
 import networkx as nx
 from img_processing.img_tools import *
 
-def img_to_graph(path: str, print_image: bool=False, return_edge_lengths=False) -> nx.Graph:
+def img_to_graph(path: str, print_image: bool=False, return_edge_lengths=False, dist_meas=False) -> nx.Graph:
     """Converts an image to a graph.
    
     Args:
@@ -14,22 +14,23 @@ def img_to_graph(path: str, print_image: bool=False, return_edge_lengths=False) 
     # load image and get contours and centres
         
     img = load_img(path)
-    mask = img_treshold(img, HMin=110, SMin=122, VMin=147, HMax=179)
+    # mask = img_treshold(img, HMin=110, SMin=122, VMin=147, HMax=179)
+    mask = img_treshold(img, HMin=145, SMin=96, VMin=0, HMax=179, SMax=255, VMax=255)
     
     #Get the corner nodes for image adjustment
-    contours, hierarchy = get_countours(mask)
+    contours, hierarchy = get_countours(mask, 100)
     img = draw_contours(img, contours, hierarchy, color=(255, 0, 0))
     centres = get_centre(contours)
     img = draw_centre(img, centres, color=(255, 0, 0))
 
     # descrew image
     sorted_pts = sort_points(centres)
-    real_width_cm, real_height_cm = 80 - 7.6, 96.5 - 7.6
-    img = descrew(img, sorted_pts, real_width_cm, real_height_cm)
+    real_width_cm, real_height_cm = 150.0 - 7.6, 150.0 - 7.6
+    img = descrew(img, sorted_pts, real_width_cm, real_height_cm, dist_meas=dist_meas)
     #print_img(img)
 
     # det the nodes
-    mask = img_treshold(img)
+    mask = img_treshold(img, HMin=49, SMin=65, VMin=0, HMax=104)
     contours, hierarchy = get_countours(mask)
     img = draw_contours(img, contours, hierarchy, color=(0, 0, 255))
     centres = get_centre(contours)

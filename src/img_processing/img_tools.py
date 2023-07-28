@@ -230,7 +230,7 @@ def create_graph(centres, img, return_edge_lengths=False):
     G = nx.Graph()
 
     # Calculate real world distance per pixel
-    real_width_cm, real_height_cm = 80 - 7.6, 96.5 - 7.6
+    real_width_cm, real_height_cm = 150.0 - 7.6, 150.0 - 7.6
     px_per_cm_x = img.shape[1] / real_width_cm
     px_per_cm_y = img.shape[0] / real_height_cm
 
@@ -371,15 +371,15 @@ def real_world_dist(coords_rover, coords_node, ratio_x, ratio_y):
     """
     Computes the real distance between the rover and a node in the graph
     based on the coordinates of the centers of both objects, and ratio
-    of distance to pixel. 
+    of distance to pixel.
 
-    Args: 
+    Args:
         coords_rover (np.ndarray): Two integer values representing the x- and y- coordinates of the rover
         coords_node (np.ndarray): Two integer values representing the x- and y- coordinates of the node
         ratio_x (float): Decimal number representing the ratio of distance per pixel along the x-axis
         ratio_y (float): Decimal number representing the ratio of distance per pixel along the y-axis
 
-    Returns: 
+    Returns:
         float representing the real world distance between the rover and one od the nodes in the graph.
 
     """
@@ -424,10 +424,11 @@ def detect_nodes(img, descrew=True):
         np.ndarray containing the coordinates of the nodes within the image
     """
     mask = img_treshold(
-        second_img, HMin=69, SMin=97, Vmin=94, HMax=179, SMax=162, VMax=151
+        img, HMin=69, SMin=97, VMin=94, HMax=179, SMax=162, VMax=151
     )
     contours, hierarchy = get_countours(mask, 100)
     centres = get_centre(contours)
+    draw_centre(img, centres, color=(255, 0, 0))
     return centres
 
 

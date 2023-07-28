@@ -7,10 +7,10 @@ import time
 from qiskit import Aer, QuantumCircuit
 from qiskit_aer import Aer
 from qiskit.tools.visualization import plot_histogram
-from qiskit.circuit.library import TwoLocal
+from qiskit.circuit.library import TwoLocal, EfficientSU2
 from qiskit.primitives import BaseEstimator
 from qiskit_optimization.applications import Maxcut, Tsp
-from qiskit.algorithms.minimum_eigensolvers import NumPyMinimumEigensolver, QAOA
+from qiskit.algorithms.minimum_eigensolvers import NumPyMinimumEigensolver, QAOA, SamplingVQE
 from qiskit.algorithms import VQE
 from qiskit.algorithms.optimizers import SPSA
 from qiskit.utils import algorithm_globals
@@ -31,7 +31,7 @@ from itertools import permutations
 
 
 n = 4
-num_qubits = (n - 1) ** 2
+num_qubits = n ** 2
 tsp = Tsp.create_random_instance(n, seed=98374)
 adj_matrix = nx.to_numpy_array(tsp.graph)
 
@@ -121,8 +121,6 @@ draw_tsp_solution(tsp.graph, z, colors, pos)
 
 import sys
 
-sys.exit()
-
 
 from qiskit.algorithms.optimizers import (
     ADAM,
@@ -141,8 +139,10 @@ sim = Aer.get_backend("aer_simulator")
 quantum_instance = QuantumInstance(backend=sim)
 
 optimizer = COBYLA(maxiter=200)
-ry = TwoLocal(qubitOp.num_qubits, "ry", "cz", reps=2, entanglement="linear")
-vqe = VQE(ansatz=ry, optimizer=optimizer, quantum_instance=quantum_instance)
+# ry = TwoLocal(qubitOp.num_qubits, "ry", "cz", reps=2, entanglement="linear")
+ry = EfficientSU2(qubitOp.num_qubits, ["ry", "cz"], reps=1, entanglement="circular", skip_final_rotation_layer=True)
+# vqe = VQE(ansatz=ry, optimizer=optimizer, quantum_instance=quantum_instance)
+vqe = SamplingVQE(sampler=Sampler(), ansatz=ry, optimizer=optimizer)
 result = vqe.compute_minimum_eigenvalue(qubitOp)
 
 print("energy:", result.eigenvalue.real)

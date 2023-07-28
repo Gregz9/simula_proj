@@ -12,9 +12,13 @@ sys.path.append(src_dir)
 
 from qiskit_aer import Aer
 from qiskit.tools.visualization import plot_histogram
-from qiskit.circuit.library import TwoLocal, EfficientSU2 
-from qiskit_optimization.applications import Maxcut 
-from qiskit.algorithms.minimum_eigensolvers import SamplingVQE, NumPyMinimumEigensolver, QAOA
+from qiskit.circuit.library import TwoLocal, EfficientSU2
+from qiskit_optimization.applications import Maxcut
+from qiskit.algorithms.minimum_eigensolvers import (
+    SamplingVQE,
+    NumPyMinimumEigensolver,
+    QAOA,
+)
 from qiskit.algorithms.optimizers import SPSA, COBYLA, NFT
 from qiskit.algorithms import VQE
 from qiskit.utils import algorithm_globals, QuantumInstance
@@ -28,13 +32,13 @@ from img_processing.img_tools import *
 from path_generator.path_tools import *
 
 PORT = 45932
-HOST = "192.168.50.108" 
+HOST = "192.168.50.108"
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 print("Socket connected")
 
 # try:
 #     sock.bind((HOST, PORT))
-# except socket.error: 
+# except socket.error:
 #     print("Binding failed")
 #
 # sock.listen(1)
@@ -43,17 +47,17 @@ print("Socket connected")
 # print("Connected")
 
 ports = [0, 1, 2]
-try: 
-    for port in ports: 
+try:
+    for port in ports:
         camera = cv.VideoCapture(port)
-        if not camera.isOpened() and port >= 3: 
+        if not camera.isOpened() and port >= 3:
             raise Exception("Failed to find a port that can be used")
-        if not camera.isOpened() and port < 3: 
+        if not camera.isOpened() and port < 3:
             continue
         if camera.isOpened():
             print(f"Camera connected on port: {port}")
             break
-except Exception as E: 
+except Exception as E:
     print("No port found! Make sure the camera is connected!")
 
 camera.set(cv.CAP_PROP_FPS, 30.0)
@@ -64,15 +68,19 @@ camera.set(cv.CAP_PROP_FRAME_HEIGHT, 1080)
 
 result, image = camera.read()
 
-if result: 
-    cv.imwrite("graph.jpg", image) 
-else: 
+if result:
+    cv.imwrite("graph.jpg", image)
+else:
     print("ERROR! NO IMAGE CAPTURED")
     # exit()
 
 
 # original_image = cv.imread("/home/gregz/Files/simula_proj/test_images/n10.jpg")
-graph, cntr_coords = img_to_graph(path = "/home/gregz/Files/simula_proj/test_images/n12.jpg", print_image = False)
+# graph, cntr_coords = img_to_graph(
+    # path="/home/gregz/Files/simula_proj/test_images/n12.jpg", print_image=False
+# )
+img_path = src_dir + "/img_processing/final_graph/graph.jpg"
+graph, cntr_coords = img_to_graph(img_path, print_image=True, dist_meas=True)
 # draw_graph(graph)
 
 N = list(graph.edges())
@@ -81,34 +89,37 @@ X = int(len(N) / 2)
 
 edges_to_remove = random.sample(N, X)
 graph.remove_edges_from(edges_to_remove)
-# draw_graph(graph)
-
+draw_graph(graph)
 N = len(cntr_coords)
-w = np.zeros([N,N])
-for i in range(N): 
-    for j in range(N): 
-        temp = graph.get_edge_data(i,j,default=0)
-        if temp != 0: 
-            w[i, j] = 1 #temp["weight"]
-
+w = np.zeros([N, N])
+# true_weights = np.zeros([N, N])
+for i in range(N):
+    for j in range(N):
+        temp = graph.get_edge_data(i, j, default=0)
+        if temp != 0:
+            w[i, j] = 1  # temp["weight"]
+            # true_weights[i, j] = temp["weight"]
+# true_weights = np.where(true_weights == 0.0, np.nan, true_weights)
 
 best_cost_brute = 0
-for b in range(2**N): 
+for b in range(2**N):
     x = [int(t) for t in reversed(list(bin(b)[2:].zfill(N)))]
     cost = 0
-    for i in range(N): 
-        for j in range(N): 
-            cost = cost + w[i,j] * x[i] * (1 - x[j])
-    if best_cost_brute < cost: 
+    for i in range(N):
+        for j in range(N):
+            cost = cost + w[i, j] * x[i] * (1 - x[j])
+    if best_cost_brute < cost:
         best_cost_brute = cost
         xbest_brute = x
     # print("case = " + str(x) + " cost = " + str(cost))
+
 
 brute_solution_colors = ["r" if xbest_brute[i] == 0 else "c" for i in range(N)]
 # draw_graph(graph, flipped=True, solution=True, colors=brute_solution_colors)
 print("\nBest brute force solution = " + str(xbest_brute))
 print("Cost found using brute force = " + str(best_cost_brute))
 print("--------------------------------------------------------------")
+
 
 # Transforming the problem into a max-cut instance
 Max_Cut = Maxcut(w)
@@ -130,8 +141,14 @@ print("--------------------------------------------------------------")
 
 # Variational approach to solving the problem
 
-optimizer = COBYLA(maxiter=10000, rhobeg=0.8)
-init_ansatz = EfficientSU2(qubitOp.num_qubits , ["rx", "cy"], entanglement="circular", reps=1, skip_final_rotation_layer=True)
+optimizer = COBYLA(maxiter=10000, rhobeg=0.4)
+init_ansatz = EfficientSU2(
+    qubitOp.num_qubits,
+    ["rx", "cy"],
+    entanglement="circular",
+    reps=1,
+    skip_final_rotation_layer=True,
+)
 vqe = SamplingVQE(sampler=Sampler(), ansatz=init_ansatz, optimizer=optimizer)
 result = vqe.compute_minimum_eigenvalue(qubitOp)
 
@@ -145,13 +162,15 @@ print("solution objective:", qp.objective.evaluate(x))
 
 # plot results
 colors = ["r" if x[i] == 0 else "c" for i in range(N)]
-# draw_graph(graph, solution=True, colors=colors)
+print(colors)
+draw_graph(graph, solution=True, colors=colors)
 solution = x
+print(solution)
 
 
 
 
-# while True: 
+# while True:
 #     data = conn.recv(1024)
 #     reply = "Confirmation of sent and received data"
 #

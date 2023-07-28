@@ -4,6 +4,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import scipy.spatial
 import numpy as np
+from itertools import permutations
 
 
 def get_euclidean_distance(point1, point2):
@@ -16,7 +17,7 @@ def get_euclidean_distance(point1, point2):
     Returns:
         float: Euclidean distance between point 1 and point 2.
     """
-    return math.sqrt((point2[0] - point1[0])**2 + (point2[1] - point1[1])**2)
+    return math.sqrt((point2[0] - point1[0]) ** 2 + (point2[1] - point1[1]) ** 2)
 
 
 def calculate_angle(point1, point2, offset=0):
@@ -60,33 +61,37 @@ def draw_solution_graph(centres, solution, node_distances, flipped=True):
 
     # Create a graph
     G = nx.Graph()
-    
+
     # Add nodes
     for i in range(len(centres)):
         G.add_node(i, pos=centres[i])
-        
+
     # Add edges
-    edges = [(solution[i-1], solution[i]) for i in range(1, len(solution))] + [(solution[-1], solution[0])]
+    edges = [(solution[i - 1], solution[i]) for i in range(1, len(solution))] + [
+        (solution[-1], solution[0])
+    ]
     G.add_edges_from(edges)
-    
-    pos = nx.get_node_attributes(G, 'pos')
+
+    pos = nx.get_node_attributes(G, "pos")
 
     if flipped:
-        pos = {node: (x,-y) for (node, (x,y)) in pos.items()}
+        pos = {node: (x, -y) for (node, (x, y)) in pos.items()}
 
     # Draw nodes with light blue color
-    nx.draw(G, pos, with_labels=True, node_color='lightblue')
-    
+    nx.draw(G, pos, with_labels=True, node_color="lightblue")
+
     # Draw edges
-    nx.draw_networkx_edges(G, pos, edgelist=edges, edge_color='r', width=2)
+    nx.draw_networkx_edges(G, pos, edgelist=edges, edge_color="r", width=2)
 
     # Add edge labels for distances
-    edge_labels = {(solution[i-1], solution[i]): round(node_distances[i-1], 2) for i in range(1, len(solution))} # We start from 1 to match the indices with node_distances
+    edge_labels = {
+        (solution[i - 1], solution[i]): round(node_distances[i - 1], 2)
+        for i in range(1, len(solution))
+    }  # We start from 1 to match the indices with node_distances
     edge_labels[(solution[-1], solution[0])] = round(node_distances[-1], 2)
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='blue')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color="blue")
 
     plt.show()
-
 
 
 def start_at_zero(solution, node_distances, edge_angles):
@@ -103,35 +108,41 @@ def start_at_zero(solution, node_distances, edge_angles):
 
     # Find the index of node 0
     zero_index = solution.index(0)
-    
+
     # Rearrange the solution to start at node 0
     rearranged_solution = solution[zero_index:] + solution[:zero_index]
-    
+
     # Rearrange node_distances and edge_angles arrays
-    rearranged_node_distances = node_distances[zero_index:] + node_distances[:zero_index]
-    rearranged_node_distances = rearranged_node_distances[1:] + [rearranged_node_distances[0]]
-    
+    rearranged_node_distances = (
+        node_distances[zero_index:] + node_distances[:zero_index]
+    )
+    rearranged_node_distances = rearranged_node_distances[1:] + [
+        rearranged_node_distances[0]
+    ]
+
     rearranged_edge_angles = edge_angles[zero_index:] + edge_angles[:zero_index]
     rearranged_edge_angles = rearranged_edge_angles[1:] + [rearranged_edge_angles[0]]
 
     return rearranged_solution, rearranged_node_distances, rearranged_edge_angles
 
 
-def graph_from_solution(G: nx.Graph, solution: list, draw_graph: bool=False, start_zero=True) -> tuple:
+def graph_from_solution(
+    G: nx.Graph, solution: list, draw_graph: bool = False, start_zero=True
+) -> tuple:
     """Create a graph from the solution.
-    
-    Args:   
+
+    Args:
         G (nx.Graph): The input graph.
         solution (list): The order of nodes that the rover should visit.
         draw_graph (bool, optional): Whether to draw the graph. Default is False.
         start_zero (bool, optional): Whether to start the solution at node 0. Default is True.
-        
-    Returns:   
-        tuple: A tuple containing the total distance, node_distances, and edge_angles. 
+
+    Returns:
+        tuple: A tuple containing the total distance, node_distances, and edge_angles.
     """
 
     # Get the node positions from the graph
-    centres = nx.get_node_attributes(G, 'pos')
+    centres = nx.get_node_attributes(G, "pos")
 
     # Calculate the total distance, distances between nodes, and the angles of the edges
     total_distance = 0
@@ -139,24 +150,28 @@ def graph_from_solution(G: nx.Graph, solution: list, draw_graph: bool=False, sta
     edge_angles = []
 
     for i in range(len(solution)):
-        if i == 0:  # The first distance is between the last and first nodes in the solution
-            node_distance = G[solution[-1]][solution[0]]['weight']
+        if (
+            i == 0
+        ):  # The first distance is between the last and first nodes in the solution
+            node_distance = G[solution[-1]][solution[0]]["weight"]
         else:  # The distance is between the current and previous nodes in the solution
-            node_distance = G[solution[i-1]][solution[i]]['weight']
+            node_distance = G[solution[i - 1]][solution[i]]["weight"]
 
         total_distance += node_distance
         node_distance = round(node_distance, 2)
         node_distances.append(node_distance)
 
         # Calculate angle of the edge
-        edge_angle = calculate_angle(centres[solution[i-1]], centres[solution[i]])
+        edge_angle = calculate_angle(centres[solution[i - 1]], centres[solution[i]])
         edge_angle = round(edge_angle, 2)
         edge_angles.append(edge_angle)
 
     total_distance = round(total_distance, 2)
 
     if start_zero:
-        solution, node_distances, edge_angles = start_at_zero(solution, node_distances, edge_angles)
+        solution, node_distances, edge_angles = start_at_zero(
+            solution, node_distances, edge_angles
+        )
 
     if draw_graph:
         draw_solution_graph(centres, solution, node_distances)
@@ -164,8 +179,44 @@ def graph_from_solution(G: nx.Graph, solution: list, draw_graph: bool=False, sta
     return solution, total_distance, node_distances, edge_angles
 
 
+def brute_force_tsp(w, N):
+    a = list(permutations(range(1, N)))
+    last_best_distance = 1e10
+    for i in a:
+        distance = 0
+        pre_j = 0
+        for j in i:
+            distance = distance + w[j, pre_j]
+            pre_j = j
+        distance = distance + w[pre_j, 0]
+        order = (0,) + i
+        if distance < last_best_distance:
+            best_order = order
+            last_best_distance = distance
+    return last_best_distance, best_order
 
-def give_directions(solution: list, edge_angles: list, node_distances: list, current_angle=90, start_distance=8, verbose=True) -> list:
+def draw_tsp_solution(G, order, colors, pos):
+    G2 = nx.DiGraph() 
+    G2.add_nodes_from(G)
+    n = len(order) 
+    for i in range(n): 
+        j = (i +1) % n
+        G2.add_edge(order[i], order[j], weight=G[order[i]][order[j]]["weight"])
+    default_axes = plt.axes(frameon=True)
+    nx.draw_networkx(G2, node_color=colors, edge_color="b", node_size=600, alpha=0.8, ax=default_axes, pos=pos) 
+    edge_labels = nx.get_edge_attributes(G2, "weight")
+    nx.draw_networkx_edge_labels(G2, pos, font_color="b", edge_labels=edge_labels)
+
+
+
+def give_directions(
+    solution: list,
+    edge_angles: list,
+    node_distances: list,
+    current_angle=90,
+    start_distance=8,
+    verbose=True,
+) -> list:
     """Give directions to a rover to traverse through the graph.
 
     Args:
@@ -184,34 +235,36 @@ def give_directions(solution: list, edge_angles: list, node_distances: list, cur
     # Move to the initial node from the starting position
     initial_move_angle = current_angle - 90
     initial_move_distance = start_distance
-    directions.append({'action': 'Turn', 'value': initial_move_angle})
-    directions.append({'action': 'Move', 'value': round(initial_move_distance, 2)})
+    directions.append({"action": "Turn", "value": initial_move_angle})
+    directions.append({"action": "Move", "value": round(initial_move_distance, 2)})
 
-    for i in range(len(solution)-1):
+    for i in range(len(solution) - 1):
         next_angle = edge_angles[i]
         turning_angle = next_angle - current_angle
-        
+
         # Turn to the correct angle before moving to the next node
-        directions.append({'action': 'Turn', 'value': round(turning_angle, 2)})
+        directions.append({"action": "Turn", "value": round(turning_angle, 2)})
 
         # Since the rover is currently at the node, it should move to the next node
-        directions.append({'action': 'Move', 'value': round(node_distances[i], 2)})
+        directions.append({"action": "Move", "value": round(node_distances[i], 2)})
 
         # The current angle is updated to the next_angle for the next iteration
         current_angle = next_angle
-        
+
     # Turn to the angle towards the first node
     last_angle = edge_angles[-1]
     last_turning_angle = last_angle - current_angle
-    directions.append({'action': 'Turn', 'value': round(last_turning_angle, 2)})
+    directions.append({"action": "Turn", "value": round(last_turning_angle, 2)})
 
     # Move to the first node from the last node
-    last_node_distance = node_distances[-1]  # distance from the last node to the first node
-    directions.append({'action': 'Move', 'value': round(last_node_distance, 2)})
+    last_node_distance = node_distances[
+        -1
+    ]  # distance from the last node to the first node
+    directions.append({"action": "Move", "value": round(last_node_distance, 2)})
 
     if verbose:
         for direction in directions:
-            if direction['action'] == 'Move':
+            if direction["action"] == "Move":
                 print(f"{direction['action']} {direction['value']:.2f} cm")
             else:
                 print(f"{direction['action']} {direction['value']:.2f} degrees")
@@ -219,23 +272,25 @@ def give_directions(solution: list, edge_angles: list, node_distances: list, cur
     return directions
 
 
-def graph_from_solution_spatial(G: nx.Graph, solution: list, draw_graph: bool=False, start_zero=True) -> tuple:
+def graph_from_solution_spatial(
+    G: nx.Graph, solution: list, draw_graph: bool = False, start_zero=True
+) -> tuple:
     """Create a graph from the solution.
-    
+
     Note: this version of the function is intended for sparse graphs where each node is not connected to all others.
-    
-    Args:   
+
+    Args:
         G (nx.Graph): The input graph.
         solution (list): The order of nodes that the rover should visit.
         draw_graph (bool, optional): Whether to draw the graph. Default is False.
         start_zero (bool, optional): Whether to start the solution at node 0. Default is True.
-        
-    Returns:   
-        tuple: A tuple containing the total distance, node_distances, and edge_angles. 
+
+    Returns:
+        tuple: A tuple containing the total distance, node_distances, and edge_angles.
     """
 
     # Get the node positions from the graph
-    centres = nx.get_node_attributes(G, 'pos')
+    centres = nx.get_node_attributes(G, "pos")
 
     # Calculate the total distance, distances between nodes, and the angles of the edges
     total_distance = 0
@@ -243,26 +298,34 @@ def graph_from_solution_spatial(G: nx.Graph, solution: list, draw_graph: bool=Fa
     edge_angles = []
 
     for i in range(len(solution)):
-        if i == 0:  # The first distance is between the last and first nodes in the solution
-            node_distance = nx.shortest_path_length(G, solution[-1], solution[0], weight='weight')
+        if (
+            i == 0
+        ):  # The first distance is between the last and first nodes in the solution
+            node_distance = nx.shortest_path_length(
+                G, solution[-1], solution[0], weight="weight"
+            )
         else:  # The distance is between the current and previous nodes in the solution
-            node_distance = nx.shortest_path_length(G, solution[i-1], solution[i], weight='weight')
+            node_distance = nx.shortest_path_length(
+                G, solution[i - 1], solution[i], weight="weight"
+            )
 
         total_distance += node_distance
         node_distance = round(node_distance, 2)
         node_distances.append(node_distance)
 
         # Calculate angle of the edge
-        edge_angle = calculate_angle(centres[solution[i-1]], centres[solution[i]])
+        edge_angle = calculate_angle(centres[solution[i - 1]], centres[solution[i]])
         edge_angle = round(edge_angle, 2)
         edge_angles.append(edge_angle)
 
     total_distance = round(total_distance, 2)
 
     if start_zero:
-        print('solution before:', solution)
-        solution, node_distances, edge_angles = start_at_zero(solution, node_distances, edge_angles)
-        print('solution after:', solution)
+        print("solution before:", solution)
+        solution, node_distances, edge_angles = start_at_zero(
+            solution, node_distances, edge_angles
+        )
+        print("solution after:", solution)
 
     if draw_graph:
         draw_solution_graph(centres, solution, node_distances)

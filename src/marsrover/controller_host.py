@@ -74,7 +74,6 @@ else:
 # )
 img_path = src_dir + "/img_processing/final_graph/graph.jpg"
 graph, cntr_coords = img_to_graph(img_path, print_image=True, dist_meas=True)
-# draw_graph(graph)
 
 N = list(graph.edges())
 # X = int(len(N) / 1.3)
@@ -90,7 +89,7 @@ for i in range(N):
     for j in range(N):
         temp = graph.get_edge_data(i, j, default=0)
         if temp != 0:
-            w[i, j] = 1  # temp["weight"]
+            w[i, j] = 1 
             # true_weights[i, j] = temp["weight"]
 # true_weights = np.where(true_weights == 0.0, np.nan, true_weights)
 
@@ -104,7 +103,6 @@ for b in range(2**N):
     if best_cost_brute < cost:
         best_cost_brute = cost
         xbest_brute = x
-    # print("case = " + str(x) + " cost = " + str(cost))
 
 
 brute_solution_colors = ["r" if xbest_brute[i] == 0 else "c" for i in range(N)]

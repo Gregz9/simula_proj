@@ -189,11 +189,18 @@ for i in range(1, len(solution_sorted)):
     if i == len(solution_sorted) -1: 
         distance_from_to[str((solution_sorted[i], solution_sorted[0]))] = node_distances[i]
 
+node_label_coords = {}
+for i in range(len(cntr_coords)):
+    node_label_coords[i] = cntr_coords[i]
+
+# print(cntr_coords)
+# print(node_label_coords)
+
 directions = give_directions(
     solution_sorted, edge_angles, node_distances, current_angle=90, start_distance=8
 )
 
-solution_data = {"directions": directions, "colors": colors, "node_coords": cntr_coords, "node_distances":distance_from_to}
+solution_data = {"directions": directions, "colors": colors, "node_coords": cntr_coords, "node_distances":distance_from_to, "node_label_coords":node_label_coords}
 
 json_directions = json.dumps(solution_data, indent=2)
 print(solution_data) 

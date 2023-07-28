@@ -1,16 +1,32 @@
 import socket
+<<<<<<< HEAD
+=======
+import argparse
+
+>>>>>>> aade1c3 ( Necessary code)
 # import rover
 import time
 import os 
 import sys
 
+<<<<<<< HEAD
 src_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 sys.path.append(src_dir) 
 
 from path_generator.path_tools import * 
+=======
+argsParse = argparse.ArgumentParser()
+argsParse.add_argument(
+    "-p", "--port", required=True, type=int, help="Port number to connect sockets over"
+)
+args = argsParse.parse_args()
+print(args.port)
+
+>>>>>>> aade1c3 ( Necessary code)
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-port = 12345
-s.connect(("192.168.50.185", port))
+port = args.port
+# s.connect(("192.168.50.185", port))
+s.connect(("172.26.0.104", port))
 print("Connected to server")
 
 servo_FL = 9
@@ -71,6 +87,7 @@ MA_dir = 0
 speed = 60
 try:
     while True:
+<<<<<<< HEAD
         command = s.recv(1024).decode("utf-8").lower()
         
         reply = "Received: " + str(command) 
@@ -80,5 +97,19 @@ try:
         print(reply)
 
     s.close()
+=======
+        command = s.recv(1024).decode("utf-8")
+        print(command)
+        if command == "terminate":
+            s.close()
+            break
+
+        reply = str(input("Reply: "))
+
+        s.send(reply.encode("utf-8"))
+
+>>>>>>> aade1c3 ( Necessary code)
 except socket.error:
     print("Something's wrong")
+
+s.close()

@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import random
+import json
+import argparse
 
 src_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 sys.path.append(src_dir)
@@ -31,21 +33,12 @@ from img_processing.img_to_graph import *
 from img_processing.img_tools import *
 from path_generator.path_tools import *
 
-PORT = 45932
-HOST = "192.168.50.108"
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-print("Socket connected")
+argsParse = argparse.ArgumentParser()
+argsParse.add_argument("-p", "--port", required=True, type=int, help="Port number to connect sockets over")
 
-# try:
-#     sock.bind((HOST, PORT))
-# except socket.error:
-#     print("Binding failed")
-#
-# sock.listen(1)
-# print("Socket awaiting connection")
-# (conn, addr) = sock.accept()
-# print("Connected")
+args = argsParse.parse_args()
 
+# Connecting to the camera
 ports = [0, 1, 2]
 try:
     for port in ports:
@@ -141,13 +134,13 @@ print("--------------------------------------------------------------")
 
 # Variational approach to solving the problem
 
-optimizer = COBYLA(maxiter=10000, rhobeg=0.4)
+optimizer = COBYLA(maxiter=10000)
 init_ansatz = EfficientSU2(
     qubitOp.num_qubits,
     ["rx", "cy"],
     entanglement="circular",
     reps=1,
-    skip_final_rotation_layer=True,
+    # skip_final_rotation_layer=True,
 )
 vqe = SamplingVQE(sampler=Sampler(), ansatz=init_ansatz, optimizer=optimizer)
 result = vqe.compute_minimum_eigenvalue(qubitOp)
@@ -165,14 +158,50 @@ colors = ["r" if x[i] == 0 else "c" for i in range(N)]
 print(colors)
 draw_graph(graph, solution=True, colors=colors)
 solution = x
-print(solution)
 
+img_path = src_dir + "/img_processing/final_graph/graph.jpg"
+graph2, cntr_coords = img_to_graph(img_path, dist_meas=True)
 
+# solutions = create_random_array(len(cntr_coords))
+path_to_walk = [i for i in range(len(cntr_coords))]
 
+solution_sorted, total_distance, node_distances, edge_angles = graph_from_solution(graph2, path_to_walk, draw_graph=True)
+directions = give_directions(solution_sorted, edge_angles, node_distances, current_angle=90, start_distance = 8)
+solution = [int(solution[i]) for i in range(len(solution))]
 
-# while True:
-#     data = conn.recv(1024)
-#     reply = "Confirmation of sent and received data"
-#
-#     conn.send(reply)
-# conn.close()
+solution_data = {"directions" : directions, "colors" : colors, "node_coords": cntr_coords}
+
+json_directions = json.dumps(solution_data, indent=2)
+
+PORT = args.port
+# HOST = "192.168.50.108"
+HOST = "172.26.0.104"
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+print("Socket connected")
+
+try:
+    sock.bind((HOST, PORT))
+except socket.error:
+    print("Binding failed")
+
+sock.listen(1)
+print("Socket awaiting connection")
+(conn, addr) = sock.accept()
+print("Connected")
+
+msg_count = 0
+while True:
+    
+    if msg_count == 1: 
+        reply = json_directions
+    else: 
+        reply = str(input("Enter message"))
+        if reply == "terminate": 
+            conn.close()
+            exit() 
+    conn.send(reply.encode("utf-8"))
+    
+    data = conn.recv(1024).decode("utf-8")
+    print("Response: ", data)
+    msg_count += 1
+conn.close()
